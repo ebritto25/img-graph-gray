@@ -2,6 +2,8 @@
 #include <opencv2/opencv.hpp>
 #include <igraph.h>
 #include <iostream>
+#include "vectorgraph.hpp"
+
 
 using namespace cv;
 using namespace std;
@@ -23,6 +25,7 @@ igraph_t createGraph(Mat imagem)
     cout << "Criado grafo "<< igraph_vcount(&graph) << " nós\n";
     return graph;
 }
+
 
 int EWVector(Mat img,igraph_vector_t *edges,igraph_vector_t *weight)
 {
@@ -74,6 +77,19 @@ int EWVector(Mat img,igraph_vector_t *edges,igraph_vector_t *weight)
 int main(int argc, char *argv[])
 {
     igraph_t graph;
+
+    VectorGraph vec;
+
+    igraph_real_t val = 10;
+
+
+    // testando o objeto
+    vec.insert(0,val);
+
+
+    std::cout << vec[0] << '\n';
+    // =======
+
     char s;
     igraph_vector_t edges,weights;
     if(argc != 2)
