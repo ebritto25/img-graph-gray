@@ -26,10 +26,8 @@ igraph_t createGraph(Mat imagem)
 
 int EWVector(Mat img,igraph_vector_t *edges,igraph_vector_t *weight)
 {
-    int cont = 0,pixel = 0,wcont = 0,*cEdges,*cWeight;
+    int cont = 0,pixel = 0,wcont = 0;
 
-    cEdges = (int*)malloc((2*(2*img.cols*img.rows-img.cols-img.rows)) * sizeof(int));
-    cWeight = (int*)malloc(((2*img.cols*img.rows-img.cols-img.rows)) * sizeof(int));
 
     for(int i = 0;i < img.rows;i++)
     {
