@@ -2,6 +2,7 @@
 #include <opencv2/opencv.hpp>
 #include <igraph.h>
 #include <iostream>
+#include <stdio.h>
 #include <cmath>
 #include "vectorgraph.hpp"
 
@@ -139,7 +140,7 @@ int main(int argc, char *argv[])
     if(argc != 2)
         exit(1);
 
-    Mat image = imread(argv[1]);
+    Mat image = imread(argv[1],0);
 
 
     VectorGraph weights(2*image.cols*image.rows+image.cols-image.rows);
@@ -150,7 +151,24 @@ int main(int argc, char *argv[])
     image_weights(image,edges,weights);
 
 
-    std::cout << weights[250000] << '\n';
+    igraph_t graph;
+
+    igraph_vector_t vec_edges;
+
+    edges.send_toIgraphVector(&vec_edges);
+
+
+    igraph_create(&graph,&vec_edges,0,0);
+
+    igraph_matrix_t res;
+
+    igraph_vector_t vec_weights;
+
+    weights.send_toIgraphVector(&vec_weights);
+
+    igraph_matrix_init(&res, 0, 0);
+
+    igraph_shortest_paths_dijkstra(&graph,&res,igraph_vss_all(),igraph_vss_all(),&vec_weights,IGRAPH_ALL);
 
 
 
@@ -161,13 +179,14 @@ int main(int argc, char *argv[])
     }
 
 
+
+
     namedWindow("Imagem",WINDOW_AUTOSIZE);
     imshow("Imagem",image);
     waitKey(0);
 
 
-
-
+    print_matrix(&res);
 
     return 0;
 }

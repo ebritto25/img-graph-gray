@@ -12,7 +12,7 @@ public:
 
 
     // OPERATORS
-    igraph_real_t& operator[] (int index) {  return (VECTOR(vec))[index]; }
+    igraph_real_t& operator[] (int index) {  return vec.stor_begin[index]; }
 
 
     int size();
@@ -20,7 +20,7 @@ public:
     void pop(int);
     void insert(int,const igraph_real_t);
 
-
+    void  send_toIgraphVector(igraph_vector_t*);
 
 
 private:
