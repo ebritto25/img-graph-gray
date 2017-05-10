@@ -2,6 +2,7 @@
 #include <opencv2/opencv.hpp>
 #include <igraph.h>
 #include <iostream>
+#include <cmath>
 #include "vectorgraph.hpp"
 
 
@@ -10,7 +11,7 @@ using namespace std;
 
 void mostrarimg(Mat img)
 {
-    namedWindow("Imagem");
+    namedWindow("Imagem",WINDOW_AUTOSIZE);
     imshow("Imagem",img);
     waitKey(0);
 }
@@ -74,46 +75,100 @@ int EWVector(Mat img,igraph_vector_t *edges,igraph_vector_t *weight)
     return 1;
 }
 
+
+// calcula os pesos na imagem
+bool image_weights(const Mat& image, VectorGraph& edges, VectorGraph& weights)
+{
+     int weight_iterator = 0, vertices_iterator = 0;
+
+     for(int  i = 0; i < image.rows; i++)
+     {
+         for(int j = 0; j < image.cols; j++)
+         {
+             if(i == image.rows - 1 && j == image.cols -1) // final da imagem..
+                   return true;
+             if(!image.size)
+                 return false;
+
+
+             if( i < image.rows - 1 &&  j < image.cols - 1)
+             {
+                 // link com a direita
+                    edges[vertices_iterator++] = j;
+                    edges[vertices_iterator++] = j+1;
+                    weights[weight_iterator++] = abs((image.at<uchar>(i,j) - image.at<uchar>(i,j+1)));
+
+
+                 //  +++++
+
+                 // link com o de baixo
+                    edges[vertices_iterator++] = j;
+                    edges[vertices_iterator++] = j + image.cols;
+
+                    weights[weight_iterator++] = abs((image.at<uchar>(i,j) - image.at<uchar>(i+1,j)));
+                 // +++++
+
+             }
+             else if( i == image.rows - 1) // borda inferior
+             {
+                 edges[vertices_iterator++] = j;
+                 edges[vertices_iterator++] = j+1;
+                 weights[weight_iterator++] =  abs((image.at<uchar>(i,j) - image.at<uchar>(i,j+1)));
+             }
+             else // borda direita
+             {
+                 edges[vertices_iterator++] = j;
+                 edges[vertices_iterator++] = j + image.cols;
+                 weights[weight_iterator++] = abs((image.at<uchar>(i,j) - image.at<uchar>(i+1,j)));
+             }
+         }
+
+     }
+
+     return false;
+}
+
+
+
+
 int main(int argc, char *argv[])
 {
-    igraph_t graph;
-
-    VectorGraph vec;
-
-    igraph_real_t val = 10;
+    //igraph_t graph;
 
 
-    // testando o objeto
-    vec.insert(0,val);
-
-
-    std::cout << vec[0] << '\n';
-    // =======
-
-    char s;
-    igraph_vector_t edges,weights;
     if(argc != 2)
         exit(1);
 
     Mat image = imread(argv[1]);
-    cvtColor(image,image,COLOR_RGB2GRAY);
 
-    //mostrarimg(image);
-    cout << image.rows << "*" << image.cols << "=" << image.cols*image.rows << endl;
 
-    graph = createGraph(image);
+    VectorGraph weights(2*image.cols*image.rows+image.cols-image.rows);
+    VectorGraph edges(2*(2*image.cols*image.rows+image.cols-image.rows));
 
-    igraph_vector_init(&edges,(2*(2*image.cols*image.rows+image.cols-image.rows)));
-    igraph_vector_init(&weights,(2*image.cols*image.rows+image.cols-image.rows));
 
-    EWVector(image,&edges,&weights);
 
-    igraph_vector_destroy(&edges);
-    igraph_vector_destroy(&weights);
+    image_weights(image,edges,weights);
 
-    igraph_destroy(&graph);
+
+    std::cout << weights[250000] << '\n';
+
+
+
+    if( image.empty() ) // Check for invalid input
+    {
+          cout <<  "Could not open or find the image" << '\n' ;
+          return -1;
+    }
+
+
+    namedWindow("Imagem",WINDOW_AUTOSIZE);
+    imshow("Imagem",image);
+    waitKey(0);
+
+
 
 
 
     return 0;
 }
+
