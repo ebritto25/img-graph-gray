@@ -42,8 +42,7 @@ int EWVector(Mat img,igraph_vector_t *edges,igraph_vector_t *weight)
                 //LIGA COM O VERTICE DE BAIXO E CALCULA O PESO
                 VECTOR(*edges)[cont+2] = pixel;
                 VECTOR(*edges)[cont+3] = pixel+(img.cols);
-                igraph_vector_set(weight,wcont++,abs(((int)img.at<uchar>(i,j) - (int)img.at<uchar>(i+1,j))));
-                //VECTOR(*weight)[wcont++] = abs(((int)img.at<uchar>(i,j) - (int)img.at<uchar>(i+1,j)));
+                VECTOR(*weight)[wcont++] = abs(((int)img.at<uchar>(i,j) - (int)img.at<uchar>(i+1,j)));
                 //AVANÇA O CONTADOR DO VETOR 2 PARES A FRENTE
                 cont += 4;
             }
@@ -83,18 +82,23 @@ void print_vector(igraph_vector_t *v) {
 
 int main(int argc, char *argv[])
 {
-    igraph_t graph;
-    igraph_vector_t edges,weights;
+    igraph_t graph, mst;
+    igraph_vector_t edges,weights,res;
     igraph_vector_ptr_t vPath,ePath;
     igraph_vector_long_t pred,inbound;
-    igraph_vs_t to;
-    int from;
+    igraph_vs_t to[4];
+
 
     if(argc != 2)
         exit(1);
 
     Mat image = imread(argv[1]);
+
+   // Mat image(5,5,CV_8UC1,Scalar(127));
+
     cvtColor(image,image,COLOR_RGB2GRAY);
+
+
 
     //CRIAÇÃO DO GRAFO
     graph = createGraph(image);
@@ -102,10 +106,12 @@ int main(int argc, char *argv[])
     //INICIALIZAÇÃO DE VETORES
     igraph_vector_init(&edges,(2*(2*image.cols*image.rows-image.cols-image.rows)));
     igraph_vector_init(&weights,(2*image.cols*image.rows-image.cols-image.rows));
+    igraph_vector_init(&res,0);
     igraph_vector_ptr_init(&vPath,1);
     igraph_vector_ptr_init(&ePath,1);
     igraph_vector_long_init(&pred,0);
     igraph_vector_long_init(&inbound,0);
+
 
     VECTOR(vPath)[0] = calloc(1,sizeof(igraph_vector_t));
     VECTOR(ePath)[0] = calloc(1,sizeof(igraph_vector_t));
@@ -113,19 +119,37 @@ int main(int argc, char *argv[])
     igraph_vector_init((igraph_vector_t*)VECTOR(vPath)[0], 0);
     igraph_vector_init((igraph_vector_t*)VECTOR(ePath)[0], 0);
 
+    //PIXELS DE PARTIDA
+    int from[] = {0,image.cols-1,image.cols/2,image.cols*(image.rows/2)};
+
+    //PIXELS DE DESTINO
+    igraph_vs_1(&to[0],igraph_vcount(&graph)-1);
+    igraph_vs_1(&to[1],igraph_vcount(&graph)-image.cols);
+    igraph_vs_1(&to[2],image.cols/2+(image.cols*(image.rows-1)));
+    igraph_vs_1(&to[3],(image.cols-1)+(image.cols*(image.rows/2)));
+
+    /*
     from = 0;//ID DO PIXEL DE PARTIDA
     igraph_vs_1(&to,24);//ID DO PIXEL DESTINO
+*/
 
-    //DETERMINAÇÃO DAS ARESTAS E ADIÇÃO NO GRAFO
+   //DETERMINAÇÃO DAS ARESTAS E ADIÇÃO NO GRAFO
     EWVector(image,&edges,&weights);
     igraph_add_edges(&graph,&edges,0);
 
 
     //CALCULA E IMPRIME MENOR CAMINHO
-    igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from,to,&weights,IGRAPH_ALL,&pred,&inbound);
-    print_vector((igraph_vector_t*)VECTOR(vPath)[0]);
+    for(int i = 0;i < 4;i++)
+    {
+        igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from[i],to[i],&weights,IGRAPH_ALL,&pred,&inbound);
+        igraph_vector_append(&res,(igraph_vector_t*)VECTOR(vPath)[0]);
+    }
+
+    print_vector(&res);
 
     cout << '\n';
+
+    igraph_minimum_spanning_tree_prim(&graph,&mst,&weights);
 
     //DESTRUIÇÃO DOS ELEMENTOS
     igraph_vector_destroy((igraph_vector_t*)VECTOR(vPath)[0]);
@@ -134,17 +158,10 @@ int main(int argc, char *argv[])
     igraph_vector_ptr_destroy(&ePath);
     igraph_vector_destroy(&edges);
     igraph_vector_destroy(&weights);
+    igraph_vector_destroy(&res);
     igraph_destroy(&graph);
+    igraph_destroy(&mst);
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    /*cvtColor(image,image,COLOR_RGB2GRAY);
-
-    //mostrarimg(image);
-    cout << image.rows << "*" << image.cols << "=" << image.cols*image.rows << endl;
-
-
-*/
 
     return 0;
 }

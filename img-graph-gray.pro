@@ -14,5 +14,6 @@ INCLUDEPATH += /usr/local/include/igraph
 LIBS += `pkg-config opencv --libs`
 LIBS += -L/usr/local/lib -ligraph
 
-SOURCES += main.cpp \ vectorgraph.cpp
+SOURCES += main.cpp \
+vectorgraph.cpp
 HEADERS += vectorgraph.hpp
