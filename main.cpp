@@ -2,6 +2,7 @@
 #include <opencv2/opencv.hpp>
 #include <igraph.h>
 #include <iostream>
+#include <cmath>
 
 using namespace cv;
 using namespace std;
@@ -73,10 +74,35 @@ int EWVector(Mat img,igraph_vector_t *edges,igraph_vector_t *weight)
 
 void print_vector(igraph_vector_t *v) {
   long int i, l=igraph_vector_size(v);
-  for (i=0; i<l; i++) {
-    cout << (long int) VECTOR(*v)[i] << "->";
+  for (i=0; i<l; i += 2) {
+    cout << "Media: " << (double) VECTOR(*v)[i] << "\n" << "Desvio Padrão: " << (double) VECTOR(*v)[i+1] << "\n";
   }
   printf("\n");
+}
+
+void avgVector(igraph_vector_t *edges,igraph_vector_t *weights, igraph_vector_t *res)
+{
+    igraph_real_t sum,des;
+    int size = igraph_vector_size(edges);
+
+    for(int i = 0;i < size;i++)
+    {
+        sum += (igraph_real_t)VECTOR(*weights)[(int)VECTOR(*edges)[i]];
+    }
+
+    sum /= size;
+
+    igraph_vector_push_back(res,sum);
+
+    for(int i = 0;i < size;i++)
+    {
+        des += pow(((igraph_real_t)VECTOR(*weights)[(int)VECTOR(*edges)[i]])-sum,2);
+    }
+
+    des /= size;
+    des = sqrt(des);
+
+    igraph_vector_push_back(res,des);
 }
 
 
@@ -94,11 +120,7 @@ int main(int argc, char *argv[])
 
     Mat image = imread(argv[1]);
 
-   // Mat image(5,5,CV_8UC1,Scalar(127));
-
     cvtColor(image,image,COLOR_RGB2GRAY);
-
-
 
     //CRIAÇÃO DO GRAFO
     graph = createGraph(image);
@@ -128,21 +150,15 @@ int main(int argc, char *argv[])
     igraph_vs_1(&to[2],image.cols/2+(image.cols*(image.rows-1)));
     igraph_vs_1(&to[3],(image.cols-1)+(image.cols*(image.rows/2)));
 
-    /*
-    from = 0;//ID DO PIXEL DE PARTIDA
-    igraph_vs_1(&to,24);//ID DO PIXEL DESTINO
-*/
-
    //DETERMINAÇÃO DAS ARESTAS E ADIÇÃO NO GRAFO
     EWVector(image,&edges,&weights);
     igraph_add_edges(&graph,&edges,0);
-
 
     //CALCULA E IMPRIME MENOR CAMINHO
     for(int i = 0;i < 4;i++)
     {
         igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from[i],to[i],&weights,IGRAPH_ALL,&pred,&inbound);
-        igraph_vector_append(&res,(igraph_vector_t*)VECTOR(vPath)[0]);
+        avgVector((igraph_vector_t*)VECTOR(ePath)[0],&weights,&res);
     }
 
     print_vector(&res);
