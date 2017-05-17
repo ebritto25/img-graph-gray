@@ -13,6 +13,7 @@ void mostrarimg(Mat img)
     namedWindow("Imagem");
     imshow("Imagem",img);
     waitKey(0);
+    //teste
 }
 
 igraph_t createGraph(Mat imagem)
