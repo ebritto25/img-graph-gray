@@ -3,6 +3,7 @@
 #include <igraph.h>
 #include <iostream>
 #include <cmath>
+#include "vectorgraph.hpp"
 
 using namespace cv;
 using namespace std;
@@ -17,7 +18,8 @@ void mostrarimg(Mat img)
 igraph_t createGraph(Mat imagem)
 {
     igraph_t graph;
-    igraph_integer_t n = imagem.rows * imagem.cols;
+
+    igraph_integer_t n = imagem.rows * imagem.cols * imagem.channels();
     igraph_empty(&graph,n,IGRAPH_UNDIRECTED);
 
 
@@ -28,43 +30,59 @@ igraph_t createGraph(Mat imagem)
 int EWVector(Mat img,igraph_vector_t *edges,igraph_vector_t *weight)
 {
     int cont = 0,pixel = 0,wcont = 0;
+    Vec3b intensity1,intensity2;
 
-
-    for(int i = 0;i < img.rows;i++)
+    for(int camada = 0; camada < 3;camada++)
     {
-        for(int j = 0;j < img.cols;j++,pixel++)
+        for(int i = 0;i < img.rows;i++)
         {
-            if((i < img.rows - 1) && (j < img.cols - 1))//PIXEL NÃO É BORDA, LIGA A DIREITA E ABAIXO
+            for(int j = 0;j < img.cols;j++,pixel++)
             {
-                //LIGA COM O VERTICE DA DIREITA E CALCULA O PESO
-                VECTOR(*edges)[cont] = pixel;
-                VECTOR(*edges)[cont+1] = pixel+1;
-                VECTOR(*weight)[wcont++] = abs(((int)img.at<uchar>(i,j) - (int)img.at<uchar>(i,j + 1)));
-                //LIGA COM O VERTICE DE BAIXO E CALCULA O PESO
-                VECTOR(*edges)[cont+2] = pixel;
-                VECTOR(*edges)[cont+3] = pixel+(img.cols);
-                VECTOR(*weight)[wcont++] = abs(((int)img.at<uchar>(i,j) - (int)img.at<uchar>(i+1,j)));
-                //AVANÇA O CONTADOR DO VETOR 2 PARES A FRENTE
-                cont += 4;
-            }
-            else
-            {
-                if((i == (img.rows - 1)) && (j == (img.cols - 1)))//ULTIMO PIXEL, NÃO FAZ NADA
-                    continue;
-
-                if(i == (img.rows - 1))//PIXEL NA BORDA INFERIOR, LIGA SÓ A DIREITA
+                if(camada < 2)
                 {
-                    VECTOR(*edges)[cont] = pixel;
-                    VECTOR(*edges)[cont+1] = pixel+1;
-                    VECTOR(*weight)[wcont++] = abs(((int)img.at<uchar>(i,j) - (int)img.at<uchar>(i,j + 1)));
-                    cont += 2;
+                    intensity1 = img.at<Vec3b>(i,j);
+                    VECTOR(*edges)[cont++] = pixel+(img.cols*img.rows);
+                    intensity2 = intensity1;
+                    VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada+1]));
                 }
-                if(j == (img.cols - 1))//PIXEL NA BORDA DIREITA, LIGA SÓ ABAIXO
+                if((i < img.rows - 1) && (j < img.cols - 1))//PIXEL NÃO É BORDA, LIGA A DIREITA E ABAIXO
                 {
-                    VECTOR(*edges)[cont] = pixel;
-                    VECTOR(*edges)[cont+1] = pixel+(img.cols);
-                    VECTOR(*weight)[wcont++] = abs(((int)img.at<uchar>(i,j) - (int)img.at<uchar>(i+1,j)));
-                    cont += 2;
+
+                    //LIGA COM O VERTICE DA DIREITA E CALCULA O PESO
+                    VECTOR(*edges)[cont++] = pixel;
+                    VECTOR(*edges)[cont++] = pixel+1;
+                    intensity1 = img.at<Vec3b>(i,j);
+                    intensity2 = img.at<Vec3b>(i,j + 1);
+                    VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada]));
+                    //LIGA COM O VERTICE DE BAIXO E CALCULA O PESO
+                    VECTOR(*edges)[cont++] = pixel;
+                    VECTOR(*edges)[cont++] = pixel+(img.cols);
+                    intensity2 = img.at<Vec3b>(i+1,j);
+                    VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada]));
+                    //AVANÇA O CONTADOR DO VETOR 2 PARES A FRENTE
+
+                }
+                else
+                {
+                    if((i == (img.rows - 1)) && (j == (img.cols - 1)))//ULTIMO PIXEL, NÃO FAZ NADA
+                        continue;
+
+                    if(i == (img.rows - 1))//PIXEL NA BORDA INFERIOR, LIGA SÓ A DIREITA
+                    {
+                        VECTOR(*edges)[cont++] = pixel;
+                        VECTOR(*edges)[cont++] = pixel+1;
+                        intensity1 = img.at<Vec3b>(i,j);
+                        intensity2 = img.at<Vec3b>(i,j + 1);
+                        VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada]));
+                    }
+                    if(j == (img.cols - 1))//PIXEL NA BORDA DIREITA, LIGA SÓ ABAIXO
+                    {
+                        VECTOR(*edges)[cont++] = pixel;
+                        VECTOR(*edges)[cont++] = pixel+(img.cols);
+                        intensity1 = img.at<Vec3b>(i,j);
+                        intensity2 = img.at<Vec3b>(i+1,j);
+                        VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada]));
+                    }
                 }
             }
         }
@@ -110,6 +128,7 @@ int main(int argc, char *argv[])
 {
     igraph_t graph, mst;
     igraph_vector_t edges,weights,res;
+
     igraph_vector_ptr_t vPath,ePath;
     igraph_vector_long_t pred,inbound;
     igraph_vs_t to[4];
@@ -120,63 +139,76 @@ int main(int argc, char *argv[])
 
     Mat image = imread(argv[1]);
 
-    cvtColor(image,image,COLOR_RGB2GRAY);
+    VectorGraph vEdges((2*((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols))));
+    VectorGraph vWeights((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols));
 
-    //CRIAÇÃO DO GRAFO
     graph = createGraph(image);
 
-    //INICIALIZAÇÃO DE VETORES
-    igraph_vector_init(&edges,(2*(2*image.cols*image.rows-image.cols-image.rows)));
-    igraph_vector_init(&weights,(2*image.cols*image.rows-image.cols-image.rows));
-    igraph_vector_init(&res,0);
-    igraph_vector_ptr_init(&vPath,1);
-    igraph_vector_ptr_init(&ePath,1);
-    igraph_vector_long_init(&pred,0);
-    igraph_vector_long_init(&inbound,0);
+    EWVector(image,vEdges.getVec(),vWeights.getVec());
+    igraph_add_edges(&graph,vEdges.getVec(),0);
 
 
-    VECTOR(vPath)[0] = calloc(1,sizeof(igraph_vector_t));
-    VECTOR(ePath)[0] = calloc(1,sizeof(igraph_vector_t));
-
-    igraph_vector_init((igraph_vector_t*)VECTOR(vPath)[0], 0);
-    igraph_vector_init((igraph_vector_t*)VECTOR(ePath)[0], 0);
-
-    //PIXELS DE PARTIDA
-    int from[] = {0,image.cols-1,image.cols/2,image.cols*(image.rows/2)};
-
-    //PIXELS DE DESTINO
-    igraph_vs_1(&to[0],igraph_vcount(&graph)-1);
-    igraph_vs_1(&to[1],igraph_vcount(&graph)-image.cols);
-    igraph_vs_1(&to[2],image.cols/2+(image.cols*(image.rows-1)));
-    igraph_vs_1(&to[3],(image.cols-1)+(image.cols*(image.rows/2)));
-
-   //DETERMINAÇÃO DAS ARESTAS E ADIÇÃO NO GRAFO
-    EWVector(image,&edges,&weights);
-    igraph_add_edges(&graph,&edges,0);
-
-    //CALCULA E IMPRIME MENOR CAMINHO
-    for(int i = 0;i < 4;i++)
+    if(image.channels() == 1)
     {
-        igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from[i],to[i],&weights,IGRAPH_ALL,&pred,&inbound);
-        avgVector((igraph_vector_t*)VECTOR(ePath)[0],&weights,&res);
+        //cvtColor(image,image,COLOR_RGB2GRAY);
+
+        //CRIAÇÃO DO GRAFO
+        graph = createGraph(image);
+
+        //INICIALIZAÇÃO DE VETORES
+        igraph_vector_init(&edges,(2*(2*image.cols*image.rows-image.cols-image.rows)));
+        igraph_vector_init(&weights,(2*image.cols*image.rows-image.cols-image.rows));
+        igraph_vector_init(&res,0);
+        igraph_vector_ptr_init(&vPath,1);
+        igraph_vector_ptr_init(&ePath,1);
+        igraph_vector_long_init(&pred,0);
+        igraph_vector_long_init(&inbound,0);
+
+
+        VECTOR(vPath)[0] = calloc(1,sizeof(igraph_vector_t));
+        VECTOR(ePath)[0] = calloc(1,sizeof(igraph_vector_t));
+
+        igraph_vector_init((igraph_vector_t*)VECTOR(vPath)[0], 0);
+        igraph_vector_init((igraph_vector_t*)VECTOR(ePath)[0], 0);
+
+        //PIXELS DE PARTIDA
+        int from[] = {0,image.cols-1,image.cols/2,image.cols*(image.rows/2)};
+
+        //PIXELS DE DESTINO
+        igraph_vs_1(&to[0],igraph_vcount(&graph)-1);
+        igraph_vs_1(&to[1],igraph_vcount(&graph)-image.cols);
+        igraph_vs_1(&to[2],image.cols/2+(image.cols*(image.rows-1)));
+        igraph_vs_1(&to[3],(image.cols-1)+(image.cols*(image.rows/2)));
+
+       //DETERMINAÇÃO DAS ARESTAS E ADIÇÃO NO GRAFO
+        EWVector(image,&edges,&weights);
+        igraph_add_edges(&graph,&edges,0);
+
+        //CALCULA E IMPRIME MENOR CAMINHO
+        for(int i = 0;i < 4;i++)
+        {
+            igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from[i],to[i],&weights,IGRAPH_ALL,&pred,&inbound);
+            avgVector((igraph_vector_t*)VECTOR(ePath)[0],&weights,&res);
+        }
+
+        print_vector(&res);
+
+        cout << '\n';
+
+        igraph_minimum_spanning_tree_prim(&graph,&mst,&weights);
+
+        //DESTRUIÇÃO DOS ELEMENTOS
+        igraph_vector_destroy((igraph_vector_t*)VECTOR(vPath)[0]);
+        igraph_vector_destroy((igraph_vector_t*)VECTOR(ePath)[0]);
+        igraph_vector_ptr_destroy(&vPath);
+        igraph_vector_ptr_destroy(&ePath);
+        igraph_vector_destroy(&edges);
+        igraph_vector_destroy(&weights);
+        igraph_vector_destroy(&res);
+        igraph_destroy(&graph);
+        igraph_destroy(&mst);
+
     }
-
-    print_vector(&res);
-
-    cout << '\n';
-
-    igraph_minimum_spanning_tree_prim(&graph,&mst,&weights);
-
-    //DESTRUIÇÃO DOS ELEMENTOS
-    igraph_vector_destroy((igraph_vector_t*)VECTOR(vPath)[0]);
-    igraph_vector_destroy((igraph_vector_t*)VECTOR(ePath)[0]);
-    igraph_vector_ptr_destroy(&vPath);
-    igraph_vector_ptr_destroy(&ePath);
-    igraph_vector_destroy(&edges);
-    igraph_vector_destroy(&weights);
-    igraph_vector_destroy(&res);
-    igraph_destroy(&graph);
-    igraph_destroy(&mst);
 
 
     return 0;

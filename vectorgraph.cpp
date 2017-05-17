@@ -9,6 +9,11 @@ VectorGraph::~VectorGraph()
     igraph_vector_destroy(&vec);
 }
 
+igraph_vector_t* VectorGraph::getVec()
+{
+    return &vec;
+}
+
 void VectorGraph::pop(int value)
 {
     igraph_vector_remove(&vec, value);
