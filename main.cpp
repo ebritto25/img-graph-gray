@@ -178,44 +178,6 @@ int main(int argc, char *argv[])
     igraph_vs_1(&to[2],((image.cols*image.rows)-image.cols));
     igraph_vs_1(&to[3],((image.cols*image.rows)-1));
 
-
-    if(image.channels() == 1)
-    {
-        //cvtColor(image,image,COLOR_RGB2GRAY);
-
-        //CRIAÇÃO DO GRAFO
-        graph = createGraph(image);
-
-        //INICIALIZAÇÃO DE VETORES
-        igraph_vector_init(&edges,(2*(2*image.cols*image.rows-image.cols-image.rows)));
-        igraph_vector_init(&weights,(2*image.cols*image.rows-image.cols-image.rows));
-        igraph_vector_init(&res,0);
-        igraph_vector_ptr_init(&vPath,1);
-        igraph_vector_ptr_init(&ePath,1);
-        igraph_vector_long_init(&pred,0);
-        igraph_vector_long_init(&inbound,0);
-
-
-        VECTOR(vPath)[0] = calloc(1,sizeof(igraph_vector_t));
-        VECTOR(ePath)[0] = calloc(1,sizeof(igraph_vector_t));
-
-        igraph_vector_init((igraph_vector_t*)VECTOR(vPath)[0], 0);
-        igraph_vector_init((igraph_vector_t*)VECTOR(ePath)[0], 0);
-
-        //PIXELS DE PARTIDA
-        int from[] = {0,image.cols-1,image.cols/2,image.cols*(image.rows/2)};
-
-        //PIXELS DE DESTINO
-        igraph_vs_1(&to[0],igraph_vcount(&graph)-1);
-        igraph_vs_1(&to[1],igraph_vcount(&graph)-image.cols);
-        igraph_vs_1(&to[2],image.cols/2+(image.cols*(image.rows-1)));
-        igraph_vs_1(&to[3],(image.cols-1)+(image.cols*(image.rows/2)));
-
-       //DETERMINAÇÃO DAS ARESTAS E ADIÇÃO NO GRAFO
-        EWVector(image,&edges,&weights);
-        igraph_add_edges(&graph,&edges,0);
-    }
-
     //CALCULA E IMPRIME MENOR CAMINHO
     for(int i = 0;i < 4;i++)
     {
