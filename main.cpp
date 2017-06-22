@@ -3,6 +3,7 @@
 #include <igraph.h>
 #include <iostream>
 #include <cmath>
+#include <QElapsedTimer>
 #include "vectorgraph.hpp"
 
 using namespace cv;
@@ -13,10 +14,9 @@ void mostrarimg(Mat img)
     namedWindow("Imagem");
     imshow("Imagem",img);
     waitKey(0);
-    //teste
 }
 
-igraph_t createGraph(Mat imagem)
+igraph_t createGraph(Mat &imagem)
 {
     igraph_t graph;
 
@@ -25,10 +25,11 @@ igraph_t createGraph(Mat imagem)
 
 
     cout << "Criado grafo "<< igraph_vcount(&graph) << " nós\n";
+    cout << "Imagem: "<< imagem.cols << 'x' << imagem.rows << '\n';
     return graph;
 }
 
-int EWVector(Mat img,igraph_vector_t *edges,igraph_vector_t *weight)
+int EWVector(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
 {
     int cont = 0,pixel = 0,wcont = 0;
     Vec3b intensity1,intensity2;
@@ -125,6 +126,7 @@ void avgVector(igraph_vector_t *edges,igraph_vector_t *weights, igraph_vector_t 
 }
 
 
+
 int main(int argc, char *argv[])
 {
     igraph_t graph, mst;
@@ -138,15 +140,43 @@ int main(int argc, char *argv[])
     if(argc != 2)
         exit(1);
 
+    //TIMER PRA DEBUG
+    QElapsedTimer timer;
+    timer.start();
+    ///////////////
+
     Mat image = imread(argv[1]);
 
+    //INICIALIZAÇÃO DE VETORES
     VectorGraph vEdges((2*((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols))));
     VectorGraph vWeights((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols));
+    igraph_vector_init(&res,0);
+    igraph_vector_ptr_init(&vPath,1);
+    igraph_vector_ptr_init(&ePath,1);
+    igraph_vector_long_init(&pred,0);
+    igraph_vector_long_init(&inbound,0);
+
+
+    VECTOR(vPath)[0] = calloc(1,sizeof(igraph_vector_t));
+    VECTOR(ePath)[0] = calloc(1,sizeof(igraph_vector_t));
+
+    igraph_vector_init((igraph_vector_t*)VECTOR(vPath)[0], 0);
+    igraph_vector_init((igraph_vector_t*)VECTOR(ePath)[0], 0);
+
 
     graph = createGraph(image);
 
     EWVector(image,vEdges.getVec(),vWeights.getVec());
     igraph_add_edges(&graph,vEdges.getVec(),0);
+
+    //PIXELS DE PARTIDA
+    int from[] = {0,(image.cols-1),(image.cols-1 + image.cols*image.rows * 2),(image.cols*image.rows*2)};
+
+    //PIXELS DE DESTINO
+    igraph_vs_1(&to[0],((image.cols*image.rows)-1)+(image.cols*image.rows*2));
+    igraph_vs_1(&to[1],((image.cols*image.rows)-image.cols)+(image.cols*image.rows*2));
+    igraph_vs_1(&to[2],((image.cols*image.rows)-image.cols));
+    igraph_vs_1(&to[3],((image.cols*image.rows)-1));
 
 
     if(image.channels() == 1)
@@ -184,33 +214,33 @@ int main(int argc, char *argv[])
        //DETERMINAÇÃO DAS ARESTAS E ADIÇÃO NO GRAFO
         EWVector(image,&edges,&weights);
         igraph_add_edges(&graph,&edges,0);
-
-        //CALCULA E IMPRIME MENOR CAMINHO
-        for(int i = 0;i < 4;i++)
-        {
-            igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from[i],to[i],&weights,IGRAPH_ALL,&pred,&inbound);
-            avgVector((igraph_vector_t*)VECTOR(ePath)[0],&weights,&res);
-        }
-
-        print_vector(&res);
-
-        cout << '\n';
-
-        igraph_minimum_spanning_tree_prim(&graph,&mst,&weights);
-
-        //DESTRUIÇÃO DOS ELEMENTOS
-        igraph_vector_destroy((igraph_vector_t*)VECTOR(vPath)[0]);
-        igraph_vector_destroy((igraph_vector_t*)VECTOR(ePath)[0]);
-        igraph_vector_ptr_destroy(&vPath);
-        igraph_vector_ptr_destroy(&ePath);
-        igraph_vector_destroy(&edges);
-        igraph_vector_destroy(&weights);
-        igraph_vector_destroy(&res);
-        igraph_destroy(&graph);
-        igraph_destroy(&mst);
-
     }
 
+    //CALCULA E IMPRIME MENOR CAMINHO
+    for(int i = 0;i < 4;i++)
+    {
+        igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from[i],to[i],vWeights.getVec(),IGRAPH_ALL,&pred,&inbound);
+        avgVector((igraph_vector_t*)VECTOR(ePath)[0],vWeights.getVec(),&res);
+    }
+
+    print_vector(&res);
+
+    cout << '\n';
+
+    igraph_minimum_spanning_tree_prim(&graph,&mst,vWeights.getVec());
+
+    //DESTRUIÇÃO DOS ELEMENTOS
+    igraph_vector_destroy((igraph_vector_t*)VECTOR(vPath)[0]);
+    igraph_vector_destroy((igraph_vector_t*)VECTOR(ePath)[0]);
+    igraph_vector_ptr_destroy(&vPath);
+    igraph_vector_ptr_destroy(&ePath);
+    //igraph_vector_destroy(&edges);
+    //igraph_vector_destroy(&weights);
+    igraph_vector_destroy(&res);
+    igraph_destroy(&graph);
+    igraph_destroy(&mst);
+
+    cout << timer.elapsed() << '\n';
 
     return 0;
 }
