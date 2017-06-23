@@ -92,12 +92,14 @@ int EWVector(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
     return 1;
 }
 
-void print_vector(igraph_vector_t *v) {
+string print_vector(igraph_vector_t *v) {
   long int i, l=igraph_vector_size(v);
+  string res = "";
   for (i=0; i<l; i += 2) {
-    cout << "Media: " << (double) VECTOR(*v)[i] << "\n" << "Desvio Padrão: " << (double) VECTOR(*v)[i+1] << "\n";
+    res += to_string((double) VECTOR(*v)[i]) + "," + to_string((double) VECTOR(*v)[i+1])+",";
   }
-  printf("\n");
+
+  return res;
 }
 
 void avgVector(igraph_vector_t *edges,igraph_vector_t *weights, igraph_vector_t *res)
@@ -127,7 +129,7 @@ void avgVector(igraph_vector_t *edges,igraph_vector_t *weights, igraph_vector_t 
 
 
 
-int main(int argc, char *argv[])
+string atributeGenerator(string arg)
 {
     igraph_t graph, mst;
     igraph_vector_t edges,weights,res;
@@ -137,15 +139,15 @@ int main(int argc, char *argv[])
     igraph_vs_t to[4];
 
 
-    if(argc != 2)
-        exit(1);
+    //if(argc != 2)
+      //  exit(1);
 
     //TIMER PRA DEBUG
     QElapsedTimer timer;
     timer.start();
     ///////////////
 
-    Mat image = imread(argv[1]);
+    Mat image = imread(arg);
 
     //INICIALIZAÇÃO DE VETORES
     VectorGraph vEdges((2*((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols))));
@@ -185,24 +187,51 @@ int main(int argc, char *argv[])
         avgVector((igraph_vector_t*)VECTOR(ePath)[0],vWeights.getVec(),&res);
     }
 
-    print_vector(&res);
+    string str_res = print_vector(&res);
 
     cout << '\n';
 
-    igraph_minimum_spanning_tree_prim(&graph,&mst,vWeights.getVec());
+    //igraph_minimum_spanning_tree_prim(&graph,&mst,vWeights.getVec());
 
     //DESTRUIÇÃO DOS ELEMENTOS
     igraph_vector_destroy((igraph_vector_t*)VECTOR(vPath)[0]);
     igraph_vector_destroy((igraph_vector_t*)VECTOR(ePath)[0]);
     igraph_vector_ptr_destroy(&vPath);
     igraph_vector_ptr_destroy(&ePath);
-    //igraph_vector_destroy(&edges);
-    //igraph_vector_destroy(&weights);
     igraph_vector_destroy(&res);
     igraph_destroy(&graph);
-    igraph_destroy(&mst);
+    //igraph_destroy(&mst);
 
     cout << timer.elapsed() << '\n';
+
+    return str_res;
+}
+
+int main(int argc, char* argv[])
+{
+    if(argc != 2)
+        exit(-1);
+
+
+
+    string path = argv[1],str_out;
+    ofstream File;
+    File.open(path+"/output.arff");
+
+    if(!File.is_open())
+        exit(-2);
+
+    for(int j = 1;j <= 1;j++)
+    {
+        int mult = (j-1)*100;
+        for(int i = mult+0;i < mult+100;i++)
+        {
+            str_out = atributeGenerator(path+"/class_"+to_string(j)+"/"+to_string(i)+".jpg")+"class_"+to_string(j)+"\n";
+            File << str_out;
+        }
+    }
+
+    File.close();
 
     return 0;
 }
