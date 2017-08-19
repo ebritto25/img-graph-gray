@@ -136,7 +136,7 @@ string atributeGenerator(string arg)
 
     igraph_vector_ptr_t vPath,ePath;
     igraph_vector_long_t pred,inbound;
-    igraph_vs_t to[4];
+    igraph_vs_t to[16];
 
 
     //if(argc != 2)
@@ -148,6 +148,13 @@ string atributeGenerator(string arg)
     ///////////////
 
     Mat image = imread(arg);
+
+    const int ultimo_pixel = (  (image.cols*image.rows)-1)+(image.cols*image.rows*2) ;
+    const int primeiro_pixel_ultima = ((image.cols*image.rows)-image.cols)+(image.cols*image.rows*2);
+    const int ultimo_pixel_1  = (image.cols*image.rows) -1;
+    const int primeiro_pixel_ultima_1 = (image.cols*image.rows)-image.cols;
+    const int meio_vertical_1 = (image.cols*(5/2));
+    const int meio_horizontal_1 = ( (image.cols*image.rows)/2 ) + (image.cols-1);
 
     //INICIALIZAÇÃO DE VETORES
     VectorGraph vEdges((2*((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols))));
@@ -172,16 +179,39 @@ string atributeGenerator(string arg)
     igraph_add_edges(&graph,vEdges.getVec(),0);
 
     //PIXELS DE PARTIDA
-    int from[] = {0,(image.cols-1),(image.cols-1 + image.cols*image.rows * 2),(image.cols*image.rows*2)};
+    int from[] = {0,(image.cols-1),(image.cols-1 + image.cols*image.rows * 2),(image.cols*image.rows*2),
+                  0,(image.cols-1),image.cols/2,image.cols*(image.rows/2),
+                    image.cols*image.rows,(image.cols-1)+(image.cols*image.rows),(image.cols/2)+(image.cols*image.rows),image.cols*(image.rows/2)+(image.cols*image.rows),
+                    image.cols*image.rows*2,(image.cols-1)+(image.cols*image.rows*2),(image.cols/2)+(image.cols*image.rows*2),image.cols*(image.rows/2)+(image.cols*image.rows*2)};
 
     //PIXELS DE DESTINO
-    igraph_vs_1(&to[0],((image.cols*image.rows)-1)+(image.cols*image.rows*2));
-    igraph_vs_1(&to[1],((image.cols*image.rows)-image.cols)+(image.cols*image.rows*2));
-    igraph_vs_1(&to[2],((image.cols*image.rows)-image.cols));
-    igraph_vs_1(&to[3],((image.cols*image.rows)-1));
+
+    //caminhos geral
+    igraph_vs_1(&to[0],ultimo_pixel); // ultimo pixel
+    igraph_vs_1(&to[1],primeiro_pixel_ultima);// primeiro pixel ultima camada
+    igraph_vs_1(&to[2],primeiro_pixel_ultima_1); // primeiro pixel ultima linha primeira camada
+    igraph_vs_1(&to[3],ultimo_pixel_1); // ultimo pixel primeira camada
+
+    //primeira camada
+    igraph_vs_1(&to[4],ultimo_pixel_1); // ultimo pixel
+    igraph_vs_1(&to[5],primeiro_pixel_ultima_1); // primeiro pixel ultima linha primeira camada
+    igraph_vs_1(&to[6],meio_vertical_1); // meio vertical
+    igraph_vs_1(&to[7],meio_horizontal_1); // meio horizontal direita]]
+
+    //segunda camada
+    igraph_vs_1(&to[8],(ultimo_pixel_1+(image.cols*image.rows))); // ultimo pixel
+    igraph_vs_1(&to[9],( primeiro_pixel_ultima_1+(image.cols*image.rows))); //primeiro pixel ultima linha
+    igraph_vs_1(&to[10],(meio_vertical_1)+(image.cols*image.rows));
+    igraph_vs_1(&to[11],(meio_horizontal_1)+(image.cols*image.rows));
+
+    //terceira camada
+    igraph_vs_1(&to[12],(ultimo_pixel_1+(image.cols*image.rows*2))); // ultimo pixel
+    igraph_vs_1(&to[13],( primeiro_pixel_ultima_1+(image.cols*image.rows*2))); //primeiro pixel ultima linha
+    igraph_vs_1(&to[14],(meio_vertical_1)+(image.cols*image.rows*2));
+    igraph_vs_1(&to[15],(meio_horizontal_1)+(image.cols*image.rows*2));
 
     //CALCULA E IMPRIME MENOR CAMINHO
-    for(int i = 0;i < 4;i++)
+    for(int i = 0;i < 16;i++)
     {
         igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from[i],to[i],vWeights.getVec(),IGRAPH_ALL,&pred,&inbound);
         avgVector((igraph_vector_t*)VECTOR(ePath)[0],vWeights.getVec(),&res);
@@ -221,7 +251,7 @@ int main(int argc, char* argv[])
     if(!File.is_open())
         exit(-2);
 
-    for(int j = 1;j <= 1;j++)
+    for(int j = 1;j <= 10;j++)
     {
         int mult = (j-1)*100;
         for(int i = mult+0;i < mult+100;i++)
