@@ -2,6 +2,7 @@
 #include <opencv2/opencv.hpp>
 #include <igraph.h>
 #include <iostream>
+#include <fstream>
 #include <cmath>
 #include <QElapsedTimer>
 #include "vectorgraph.hpp"
@@ -142,10 +143,7 @@ string atributeGenerator(string arg)
     //if(argc != 2)
       //  exit(1);
 
-    //TIMER PRA DEBUG
-    QElapsedTimer timer;
-    timer.start();
-    ///////////////
+
 
     Mat image = imread(arg);
 
@@ -231,8 +229,6 @@ string atributeGenerator(string arg)
     igraph_vector_destroy(&res);
     igraph_destroy(&graph);
     //igraph_destroy(&mst);
-
-    cout << timer.elapsed() << '\n';
 
     return str_res;
 }
