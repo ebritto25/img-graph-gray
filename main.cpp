@@ -219,7 +219,7 @@ string atributeGenerator(string arg)
 
     cout << '\n';
 
-    //igraph_minimum_spanning_tree_prim(&graph,&mst,vWeights.getVec());
+    igraph_minimum_spanning_tree_prim(&graph,&mst,vWeights.getVec());
 
     //DESTRUIÇÃO DOS ELEMENTOS
     igraph_vector_destroy((igraph_vector_t*)VECTOR(vPath)[0]);
@@ -228,7 +228,7 @@ string atributeGenerator(string arg)
     igraph_vector_ptr_destroy(&ePath);
     igraph_vector_destroy(&res);
     igraph_destroy(&graph);
-    //igraph_destroy(&mst);
+    igraph_destroy(&mst);
 
     return str_res;
 }
@@ -252,6 +252,7 @@ int main(int argc, char* argv[])
         int mult = (j-1)*100;
         for(int i = mult+0;i < mult+100;i++)
         {
+             std::cerr << "Imagem:  " << i<< " de 1000.\n";
             str_out = atributeGenerator(path+"/class_"+to_string(j)+"/"+to_string(i)+".jpg")+"class_"+to_string(j)+"\n";
             File << str_out;
         }
