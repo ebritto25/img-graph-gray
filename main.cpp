@@ -229,7 +229,7 @@ string atributeGenerator(string arg)
                   0,(image.cols-1),image.cols/2,image.cols*(image.rows/2),
                     image.cols*image.rows,(image.cols-1)+(image.cols*image.rows),(image.cols/2)+(image.cols*image.rows),image.cols*(image.rows/2)+(image.cols*image.rows),
                     image.cols*image.rows*2,(image.cols-1)+(image.cols*image.rows*2),(image.cols/2)+(image.cols*image.rows*2),image.cols*(image.rows/2)+(image.cols*image.rows*2)};
-int from_gray[] {0,(image.cols-1),image.cols/2,image.cols*(image.rows/2)};
+    int from_gray[] {0,(image.cols-1),image.cols/2,image.cols*(image.rows/2)};
     //PIXELS DE DESTINO
 /*
     //caminhos geral
