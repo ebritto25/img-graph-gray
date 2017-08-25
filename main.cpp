@@ -179,8 +179,8 @@ void avgVector(igraph_vector_t *edges,igraph_vector_t *weights, igraph_vector_t 
 
 string atributeGenerator(string arg)
 {
-    igraph_t graph, mst;
-    igraph_vector_t edges,weights,res;
+    igraph_t graph;
+    igraph_vector_t edges,weights,res, edges_mst;
 
     igraph_vector_ptr_t vPath,ePath;
     igraph_vector_long_t pred,inbound;
@@ -206,6 +206,7 @@ string atributeGenerator(string arg)
     VectorGraph vEdges((2*((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols))));
     VectorGraph vWeights((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols));
     igraph_vector_init(&res,0);
+    igraph_vector_init(&edges_mst,0);
     igraph_vector_ptr_init(&vPath,1);
     igraph_vector_ptr_init(&ePath,1);
     igraph_vector_long_init(&pred,0);
@@ -267,7 +268,7 @@ string atributeGenerator(string arg)
 
     cout << '\n';
 
-    igraph_minimum_spanning_tree_prim(&graph,&mst,vWeights.getVec());
+    igraph_minimum_spanning_tree(&graph,&edges_mst,vWeights.getVec());
 
     //DESTRUIÇÃO DOS ELEMENTOS
     igraph_vector_destroy((igraph_vector_t*)VECTOR(vPath)[0]);
@@ -276,7 +277,7 @@ string atributeGenerator(string arg)
     igraph_vector_ptr_destroy(&ePath);
     igraph_vector_destroy(&res);
     igraph_destroy(&graph);
-    igraph_destroy(&mst);
+    igraph_vector_destroy(&edges_mst);
 
     return str_res;
 }
