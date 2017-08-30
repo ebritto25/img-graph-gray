@@ -367,7 +367,10 @@ int main(int argc, char* argv[])
 
 
     if(!File.is_open())
+     {
+            cerr << "PROBLEMA AO ABRIR ARQUIVO ARFF\n";
             exit(-2);
+    }
 
     if(!gray_img)
     {
