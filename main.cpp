@@ -360,7 +360,7 @@ int main(int argc, char* argv[])
     ofstream File;
     File.open(path+"/output.arff");
 
-    if(!File.is_open())
+    if(!File.is_open())	
         exit(-2);
 
     if(!gray_img)
