@@ -297,6 +297,7 @@ string atributeGenerator_gray(string arg)
     VectorGraph vEdges((2*((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols))));
     VectorGraph vWeights((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols));
     igraph_vector_init(&res,0);
+    igraph_vector_init(&edges_mst,0);
     igraph_vector_ptr_init(&vPath,1);
     igraph_vector_ptr_init(&ePath,1);
     igraph_vector_long_init(&pred,0);
@@ -336,7 +337,7 @@ string atributeGenerator_gray(string arg)
 
     cout << '\n';
 
-//    igraph_minimum_spanning_tree(&graph,&edges_mst,vWeights.getVec());
+    igraph_minimum_spanning_tree(&graph,&edges_mst,vWeights.getVec());
 
     //DESTRUIÇÃO DOS ELEMENTOS
     igraph_vector_destroy((igraph_vector_t*)VECTOR(vPath)[0]);
@@ -345,7 +346,7 @@ string atributeGenerator_gray(string arg)
     igraph_vector_ptr_destroy(&ePath);
     igraph_vector_destroy(&res);
     igraph_destroy(&graph);
-//    igraph_vector_destroy(&edges_mst);
+    igraph_vector_destroy(&edges_mst);
 
     return str_res;
 
