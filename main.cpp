@@ -142,7 +142,7 @@ int EWVector(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
 
 string print_vector(igraph_vector_t *v) {
   long int i, l=igraph_vector_size(v);
-  string res = "";
+  string res {""};
   for (i=0; i<l; i += 2) {
     res += to_string((double) VECTOR(*v)[i]) + "," + to_string((double) VECTOR(*v)[i+1])+",";
   }
@@ -184,19 +184,109 @@ string atributeGenerator(string arg)
 
     igraph_vector_ptr_t vPath,ePath;
     igraph_vector_long_t pred,inbound;
+    igraph_vs_t to[16];
+
+    Mat image = imread(arg);
+
+    const int ultimo_pixel = (  (image.cols*image.rows)-1)+(image.cols*image.rows*2) ;
+    const int primeiro_pixel_ultima = ((image.cols*image.rows)-image.cols)+(image.cols*image.rows*2);
+    const int ultimo_pixel_1  = (image.cols*image.rows) -1;
+    const int primeiro_pixel_ultima_1 = (image.cols*image.rows)-image.cols;
+    const int meio_vertical_1 = (image.cols*(5/2));
+    const int meio_horizontal_1 = ( (image.cols*image.rows)/2 ) + (image.cols-1);
+
+    //INICIALIZAÇÃO DE VETORES
+    VectorGraph vEdges((2*((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols))));
+    VectorGraph vWeights((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols));
+    igraph_vector_init(&res,0);
+    igraph_vector_ptr_init(&vPath,1);
+    igraph_vector_ptr_init(&ePath,1);
+    igraph_vector_long_init(&pred,0);
+    igraph_vector_long_init(&inbound,0);
+
+
+    VECTOR(vPath)[0] = calloc(1,sizeof(igraph_vector_t));
+    VECTOR(ePath)[0] = calloc(1,sizeof(igraph_vector_t));
+
+    igraph_vector_init((igraph_vector_t*)VECTOR(vPath)[0], 0);
+    igraph_vector_init((igraph_vector_t*)VECTOR(ePath)[0], 0);
+
+
+    graph = createGraph(image);
+
+    EWVector(image,vEdges.getVec(),vWeights.getVec());
+    igraph_add_edges(&graph,vEdges.getVec(),0);
+
+    //PIXELS DE PARTIDA
+    int from[] = {0,(image.cols-1),(image.cols-1 + image.cols*image.rows * 2),(image.cols*image.rows*2),
+                  0,(image.cols-1),image.cols/2,image.cols*(image.rows/2),
+                    image.cols*image.rows,(image.cols-1)+(image.cols*image.rows),(image.cols/2)+(image.cols*image.rows),image.cols*(image.rows/2)+(image.cols*image.rows),
+                    image.cols*image.rows*2,(image.cols-1)+(image.cols*image.rows*2),(image.cols/2)+(image.cols*image.rows*2),image.cols*(image.rows/2)+(image.cols*image.rows*2)};
+
+    //PIXELS DE DESTINO
+
+    //caminhos geral
+    igraph_vs_1(&to[0],ultimo_pixel); // ultimo pixel
+    igraph_vs_1(&to[1],primeiro_pixel_ultima);// primeiro pixel ultima camada
+    igraph_vs_1(&to[2],primeiro_pixel_ultima_1); // primeiro pixel ultima linha primeira camada
+    igraph_vs_1(&to[3],ultimo_pixel_1); // ultimo pixel primeira camada
+
+    //primeira camada
+    igraph_vs_1(&to[4],ultimo_pixel_1); // ultimo pixel
+    igraph_vs_1(&to[5],primeiro_pixel_ultima_1); // primeiro pixel ultima linha primeira camada
+    igraph_vs_1(&to[6],meio_vertical_1); // meio vertical
+    igraph_vs_1(&to[7],meio_horizontal_1); // meio horizontal direita]]
+
+    //segunda camada
+    igraph_vs_1(&to[8],(ultimo_pixel_1+(image.cols*image.rows))); // ultimo pixel
+    igraph_vs_1(&to[9],( primeiro_pixel_ultima_1+(image.cols*image.rows))); //primeiro pixel ultima linha
+    igraph_vs_1(&to[10],(meio_vertical_1)+(image.cols*image.rows));
+    igraph_vs_1(&to[11],(meio_horizontal_1)+(image.cols*image.rows));
+
+    //terceira camada
+    igraph_vs_1(&to[12],(ultimo_pixel_1+(image.cols*image.rows*2))); // ultimo pixel
+    igraph_vs_1(&to[13],( primeiro_pixel_ultima_1+(image.cols*image.rows*2))); //primeiro pixel ultima linha
+    igraph_vs_1(&to[14],(meio_vertical_1)+(image.cols*image.rows*2));
+    igraph_vs_1(&to[15],(meio_horizontal_1)+(image.cols*image.rows*2));
+
+    //CALCULA E IMPRIME MENOR CAMINHO
+    for(int i = 0;i < 16;i++)
+    {
+        igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from[i],to[i],vWeights.getVec(),IGRAPH_ALL,&pred,&inbound);
+        avgVector((igraph_vector_t*)VECTOR(ePath)[0],vWeights.getVec(),&res);
+    }
+
+    string str_res = print_vector(&res);
+
+    cout << '\n';
+
+    igraph_minimum_spanning_tree_prim(&graph,&mst,vWeights.getVec());
+
+    //DESTRUIÇÃO DOS ELEMENTOS
+    igraph_vector_destroy((igraph_vector_t*)VECTOR(vPath)[0]);
+    igraph_vector_destroy((igraph_vector_t*)VECTOR(ePath)[0]);
+    igraph_vector_ptr_destroy(&vPath);
+    igraph_vector_ptr_destroy(&ePath);
+    igraph_vector_destroy(&res);
+    igraph_destroy(&graph);
+    igraph_destroy(&mst);
+
+    return str_res;
+}
+
+string atributeGenerator_gray(string arg)
+{
+
+    igraph_t graph, mst;
+    igraph_vector_t edges,weights,res;
+
+    igraph_vector_ptr_t vPath,ePath;
+    igraph_vector_long_t pred,inbound;
     igraph_vs_t to[4];
-
-
-    //if(argc != 2)
-      //  exit(1);
-
-
 
     Mat image = imread(arg);
     cvtColor(image,image,COLOR_RGB2GRAY);
 
-    const int ultimo_pixel = (  (image.cols*image.rows)-1)+(image.cols*image.rows*2) ;
-    const int primeiro_pixel_ultima = ((image.cols*image.rows)-image.cols)+(image.cols*image.rows*2);
     const int ultimo_pixel_1  = (image.cols*image.rows) -1;
     const int primeiro_pixel_ultima_1 = (image.cols*image.rows)-image.cols;
     const int meio_vertical_1 = (image.cols*(5/2));
@@ -225,37 +315,14 @@ string atributeGenerator(string arg)
     igraph_add_edges(&graph,vEdges.getVec(),0);
 
     //PIXELS DE PARTIDA
-    int from[] = {0,(image.cols-1),(image.cols-1 + image.cols*image.rows * 2),(image.cols*image.rows*2),
-                  0,(image.cols-1),image.cols/2,image.cols*(image.rows/2),
-                    image.cols*image.rows,(image.cols-1)+(image.cols*image.rows),(image.cols/2)+(image.cols*image.rows),image.cols*(image.rows/2)+(image.cols*image.rows),
-                    image.cols*image.rows*2,(image.cols-1)+(image.cols*image.rows*2),(image.cols/2)+(image.cols*image.rows*2),image.cols*(image.rows/2)+(image.cols*image.rows*2)};
     int from_gray[] {0,(image.cols-1),image.cols/2,image.cols*(image.rows/2)};
+
     //PIXELS DE DESTINO
-/*
-    //caminhos geral
-    igraph_vs_1(&to[0],ultimo_pixel); // ultimo pixel
-    igraph_vs_1(&to[1],primeiro_pixel_ultima);// primeiro pixel ultima camada
-    igraph_vs_1(&to[2],primeiro_pixel_ultima_1); // primeiro pixel ultima linha primeira camada
-    igraph_vs_1(&to[3],ultimo_pixel_1); // ultimo pixel primeira camada
-*/
-    //primeira camada
     igraph_vs_1(&to[0],ultimo_pixel_1); // ultimo pixel
     igraph_vs_1(&to[1],primeiro_pixel_ultima_1); // primeiro pixel ultima linha primeira camada
     igraph_vs_1(&to[2],meio_vertical_1); // meio vertical
     igraph_vs_1(&to[3],meio_horizontal_1); // meio horizontal direita]]
-/*
-    //segunda camada
-    igraph_vs_1(&to[8],(ultimo_pixel_1+(image.cols*image.rows))); // ultimo pixel
-    igraph_vs_1(&to[9],( primeiro_pixel_ultima_1+(image.cols*image.rows))); //primeiro pixel ultima linha
-    igraph_vs_1(&to[10],(meio_vertical_1)+(image.cols*image.rows));
-    igraph_vs_1(&to[11],(meio_horizontal_1)+(image.cols*image.rows));
 
-    //terceira camada
-    igraph_vs_1(&to[12],(ultimo_pixel_1+(image.cols*image.rows*2))); // ultimo pixel
-    igraph_vs_1(&to[13],( primeiro_pixel_ultima_1+(image.cols*image.rows*2))); //primeiro pixel ultima linha
-    igraph_vs_1(&to[14],(meio_vertical_1)+(image.cols*image.rows*2));
-    igraph_vs_1(&to[15],(meio_horizontal_1)+(image.cols*image.rows*2));
-*/
     //CALCULA E IMPRIME MENOR CAMINHO
     for(int i = 0;i < 4;i++)
     {
@@ -279,6 +346,7 @@ string atributeGenerator(string arg)
     igraph_destroy(&mst);
 
     return str_res;
+
 }
 
 int main(int argc, char* argv[])
@@ -286,7 +354,7 @@ int main(int argc, char* argv[])
     if(argc != 2)
         exit(-1);
 
-
+    bool gray_img = true;
 
     string path = argv[1],str_out;
     ofstream File;
@@ -295,15 +363,32 @@ int main(int argc, char* argv[])
     if(!File.is_open())
         exit(-2);
 
-    for(int j = 1;j <= 10;j++)
+    if(!gray_img)
     {
-        int mult = (j-1)*100;
-        for(int i = mult+0;i < mult+100;i++)
-        {
-             std::cerr << "Imagem:  " << i<< " de 1000.\n";
-            str_out = atributeGenerator(path+"/class_"+to_string(j)+"/"+to_string(i)+".jpg")+"class_"+to_string(j)+"\n";
-            File << str_out;
-        }
+            for(int j = 1;j <= 10;j++)
+            {
+                    int mult = (j-1)*100;
+                    for(int i = mult+0;i < mult+100;i++)
+                    {
+                         std::cerr << "Imagem:  " << i+1<< " de 1000.\n";
+                        str_out = atributeGenerator(path+"/class_"+to_string(j)+"/"+to_string(i)+".jpg")+"class_"+to_string(j)+"\n";
+                        File << str_out;
+                    }
+            }
+    }
+    else
+    {
+            for(int j = 1;j <= 10;j++)
+            {
+                    int mult = (j-1)*100;
+                    for(int i = mult+0;i < mult+100;i++)
+                    {
+                         std::cerr << "Imagem:  " << i+1<< " de 1000.\n";
+                        str_out = atributeGenerator_gray(path+"/class_"+to_string(j)+"/"+to_string(i)+".jpg")+"class_"+to_string(j)+"\n";
+                        File << str_out;
+                    }
+            }
+
     }
 
     File.close();
