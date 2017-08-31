@@ -256,12 +256,14 @@ string atributeGenerator(string arg)
         igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from[i],to[i],vWeights.getVec(),IGRAPH_ALL,&pred,&inbound);
         avgVector((igraph_vector_t*)VECTOR(ePath)[0],vWeights.getVec(),&res);
     }
+    igraph_minimum_spanning_tree(&graph,&edges_mst,vWeights.getVec());
+    avgVector(&edges_mst,vWeights.getVec(),&res);
+
 
     string str_res = print_vector(&res);
 
     cout << '\n';
 
-    igraph_minimum_spanning_tree_prim(&graph,&mst,vWeights.getVec());
 
     //DESTRUIÇÃO DOS ELEMENTOS
     igraph_vector_destroy((igraph_vector_t*)VECTOR(vPath)[0]);
@@ -270,7 +272,7 @@ string atributeGenerator(string arg)
     igraph_vector_ptr_destroy(&ePath);
     igraph_vector_destroy(&res);
     igraph_destroy(&graph);
-    igraph_destroy(&mst);
+    igraph_vector_destroy(&edges_mst);
 
     return str_res;
 }
@@ -333,11 +335,16 @@ string atributeGenerator_gray(string arg)
         avgVector((igraph_vector_t*)VECTOR(ePath)[0],vWeights.getVec(),&res);
     }
 
-    string str_res = print_vector(&res);
 
     cout << '\n';
 
     igraph_minimum_spanning_tree(&graph,&edges_mst,vWeights.getVec());
+    int size = igraph_vector_size(&edges_mst);
+
+
+    avgVector(&edges_mst,vWeights.getVec(),&res);
+
+    string str_res = print_vector(&res);
 
     //DESTRUIÇÃO DOS ELEMENTOS
     igraph_vector_destroy((igraph_vector_t*)VECTOR(vPath)[0]);
@@ -395,7 +402,7 @@ int main(int argc, char* argv[])
                     {
                          std::cerr << "Imagem:  " << i+1<< " de 1000.\n";
                         str_out = atributeGenerator_gray(path+"/class_"+to_string(j)+"/"+to_string(i)+".jpg")+"class_"+to_string(j)+"\n";
-                        cerr << "ARFF OUTPUT: " << str_out << '\n';
+                         std::cerr << "OUTPUT ARFF:  " << str_out << '\n';
                         File << str_out;
                     }
             }
