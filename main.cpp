@@ -257,11 +257,13 @@ string atributeGenerator(string arg)
         avgVector((igraph_vector_t*)VECTOR(ePath)[0],vWeights.getVec(),&res);
     }
 
+    igraph_minimum_spanning_tree(&graph,&edges_mst,vWeights.getVec());
+    avgVector(&edges_mst,vWeights.getVec(),&res);
+
     string str_res = print_vector(&res);
 
     cout << '\n';
 
-    igraph_minimum_spanning_tree_prim(&graph,&mst,vWeights.getVec());
 
     //DESTRUIÇÃO DOS ELEMENTOS
     igraph_vector_destroy((igraph_vector_t*)VECTOR(vPath)[0]);
@@ -270,7 +272,7 @@ string atributeGenerator(string arg)
     igraph_vector_ptr_destroy(&ePath);
     igraph_vector_destroy(&res);
     igraph_destroy(&graph);
-    igraph_destroy(&mst);
+    igraph_vector_destroy(&edges_mst);
 
     return str_res;
 }
@@ -333,11 +335,14 @@ string atributeGenerator_gray(string arg)
         avgVector((igraph_vector_t*)VECTOR(ePath)[0],vWeights.getVec(),&res);
     }
 
+    igraph_minimum_spanning_tree(&graph,&edges_mst,vWeights.getVec());
+    avgVector(&edges_mst,vWeights.getVec(),&res);
+
     string str_res = print_vector(&res);
 
     cout << '\n';
 
-    igraph_minimum_spanning_tree(&graph,&edges_mst,vWeights.getVec());
+
 
     //DESTRUIÇÃO DOS ELEMENTOS
     igraph_vector_destroy((igraph_vector_t*)VECTOR(vPath)[0]);
@@ -357,7 +362,7 @@ int main(int argc, char* argv[])
     if(argc != 2)
         exit(-1);
 
-    bool gray_img = true;
+    bool gray_img = false;
 
     string path = argv[1],str_out;
     ofstream File;
