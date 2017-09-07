@@ -20,9 +20,6 @@ public:
     void pop(int);
     void insert(int,const igraph_real_t);
 
-    void  send_toIgraphVector(igraph_vector_t*);
-
-
 private:
     igraph_vector_t vec;
 };

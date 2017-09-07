@@ -1,4 +1,5 @@
 #include <QCoreApplication>
+#include <map>
 #include <opencv2/opencv.hpp>
 #include <igraph.h>
 #include <iostream>
@@ -29,6 +30,30 @@ igraph_t createGraph(Mat &imagem)
     cout << "Imagem: "<< imagem.cols << 'x' << imagem.rows << '\n';
     return graph;
 }
+
+
+void gera_mat_adj(igraph_matrix_t* mat_adj,Mat& image,igraph_vector_t* weights)
+{
+
+   igraph_matrix_init(mat_adj,0,0);
+   igraph_matrix_add_cols(mat_adj,image.cols*image.rows);
+   igraph_matrix_add_rows(mat_adj,image.cols*image.rows);
+
+    for(int i = 0; i < image.rows*image.cols;i++)
+        for(int j = 0; j < image.rows*image.cols;j++)
+            MATRIX(*mat_adj,i,j) = image.at<uchar>(i/image.cols,i%image.rows) - image.at<uchar>(j/image.cols,j%image.rows);
+
+    int weight_index = 0;
+
+    for(int i = 0; i < image.rows*image.cols;i++)
+        for(int j = i+1; j < image.rows*image.cols;j++)
+                VECTOR(*weights)[weight_index++] = MATRIX(*mat_adj,i,j);
+
+
+
+
+}
+
 
 int EWVector_gray(Mat & img,igraph_vector_t *edges,igraph_vector_t *weight)
 {
@@ -175,6 +200,32 @@ void avgVector(igraph_vector_t *edges,igraph_vector_t *weights, igraph_vector_t 
     igraph_vector_push_back(res,des);
 }
 
+void mst_normalizada(igraph_vector_t* edges, igraph_vector_t* weights,igraph_vector_t* res)
+{
+    igraph_real_t sum,val;
+    int size = igraph_vector_size(edges);
+    multimap<igraph_real_t,int> prob;
+
+    for(int i = 0;i < size;i++)
+    {
+        sum += (igraph_real_t)VECTOR(*weights)[(int)VECTOR(*edges)[i]];
+    }
+
+    for(int i = 0; i < size; i++)
+    {
+        val = float(VECTOR(*weights)[(int)VECTOR(*edges)[i]]);
+        prob.emplace(std::make_pair(val,(int)VECTOR(*edges)[i]));
+    }
+
+    igraph_real_t insert_val;
+
+    for(auto it = prob.begin(); it != prob.end(); it = prob.upper_bound(it->first)) {
+
+        insert_val = igraph_real_t(it->first/ prob.count(it->first));
+            igraph_vector_push_back(res,insert_val);
+
+    }
+}
 
 
 string atributeGenerator(string arg)
@@ -336,6 +387,7 @@ string atributeGenerator_gray(string arg)
     }
 
     igraph_minimum_spanning_tree(&graph,&edges_mst,vWeights.getVec());
+
     avgVector(&edges_mst,vWeights.getVec(),&res);
 
     string str_res = print_vector(&res);
@@ -357,18 +409,27 @@ string atributeGenerator_gray(string arg)
 
 }
 
+//=====================
+
 int main(int argc, char* argv[])
 {
     if(argc != 2)
         exit(-1);
 
-    bool gray_img = false;
+    bool gray_img = true, brodatz = true;
 
     string path = argv[1],str_out;
-    ofstream File;
-    string output_name = "/output.arff";
 
-    File.open(path+output_name);
+    ofstream File;
+    string output_arff_name = "/output.arff";
+
+    File.open(path+output_arff_name);
+
+
+
+    string path_folder = "sub_class_";
+    string image_codec = ".tiff";
+
 
 
 
@@ -385,25 +446,48 @@ int main(int argc, char* argv[])
                     int mult = (j-1)*100;
                     for(int i = mult+0;i < mult+100;i++)
                     {
-                         std::cerr << "Imagem:  " << i+1<< " de 1000.\n";
-                        str_out = atributeGenerator(path+"/class_"+to_string(j)+"/"+to_string(i)+".jpg")+"class_"+to_string(j)+"\n";
+                         std::cout << "Imagem:  " << i+1<< " de 1000.\n";
+                        str_out = atributeGenerator(path+"/"+path_folder+to_string(j)+"/"+to_string(i)+image_codec)+path_folder+to_string(j)+"\n";
                         File << str_out;
                     }
             }
     }
     else
     {
+        if(!brodatz)
+        {
+
             for(int j = 1;j <= 10;j++)
             {
                     int mult = (j-1)*100;
                     for(int i = mult+0;i < mult+100;i++)
                     {
-                         std::cerr << "Imagem:  " << i+1<< " de 1000.\n";
-                        str_out = atributeGenerator_gray(path+"/class_"+to_string(j)+"/"+to_string(i)+".jpg")+"class_"+to_string(j)+"\n";
+                         std::cout << "Imagem:  " << i+1<< " de 1000.\n";
+                        str_out = atributeGenerator_gray(path+"/"+path_folder+to_string(j)+"/"+to_string(i)+image_codec)+path_folder+to_string(j)+"\n";
                         cerr << "ARFF OUTPUT: " << str_out << '\n';
                         File << str_out;
                     }
             }
+         }
+         else
+        {
+            for(int j = 1; j <= 13; j++)
+            {
+                for(int i = 0; i < 1024/* terceira classe em diante*/; i++)
+                {
+
+                        std::cout << "Imagem BROADTZ:  " << i+1<< " de 1024 CLASSE: " << j << '\n';
+                        str_out = atributeGenerator_gray(path+"/"+path_folder+to_string(j)+"/"+"output"+to_string(j)+"_"+to_string(i)+image_codec)+path_folder+to_string(j)+"\n";
+
+                        File << str_out;
+                }
+
+
+            }
+
+
+
+        }
 
     }
 

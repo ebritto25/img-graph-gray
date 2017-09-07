@@ -35,11 +35,6 @@ void VectorGraph::insert(int index,const igraph_real_t val)
 }
 
 
-void  VectorGraph::send_toIgraphVector(igraph_vector_t* vector)
-{
-     igraph_vector_copy(vector,&vec);
-}
-
 int VectorGraph::size()
 {
     return igraph_vector_size(&vec);
