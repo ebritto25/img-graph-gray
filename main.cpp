@@ -1,5 +1,6 @@
 #include <QCoreApplication>
 #include <opencv2/opencv.hpp>
+#include <opencv2/core/cuda.hpp>
 #include <igraph.h>
 #include <iostream>
 #include <fstream>
@@ -437,13 +438,15 @@ int main(int argc, char* argv[])
          }
          else
         {
-            for(int j = 1; j <= 13; j++)
+            for(int j = 1; j <= 7; j++)
             {
+
                 for(int i = 0; i < 256/* 1024 terceira classe em diante*/; i++)
                 {
 
                         std::cout << "Imagem BROADTZ:  " << i+1<< " de 256 CLASSE: " << j << '\n';
-                        str_out = atributeGenerator_gray(path+"/"+path_folder+to_string(j)+"/"+"output"+to_string(j)+"_"+to_string(i)+image_codec)+path_folder+to_string(j)+"\n";
+                        str_out = atributeGenerator_gray(path+"/"+path_folder+to_string(j)+"/"+"output"+to_string(j)+"_"+to_string(i)+image_codec);
+                        str_out += path_folder+to_string(j)+"\n";
 
                         File << str_out;
                 }
