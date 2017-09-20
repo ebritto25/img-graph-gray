@@ -280,8 +280,8 @@ string atributeGenerator(string arg)
 string atributeGenerator_gray(string arg)
 {
 
-    igraph_t graph, mst;
-    igraph_vector_t edges,weights,res,edges_mst;
+    igraph_t graph;
+    igraph_vector_t res,edges_mst;
 
     igraph_vector_ptr_t vPath,ePath;
     igraph_vector_long_t pred,inbound;

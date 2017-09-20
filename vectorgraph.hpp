@@ -11,10 +11,10 @@ public:
     ~VectorGraph();
 
 
-    // OPERATORS
     igraph_real_t& operator[] (int index) {  return vec.stor_begin[index]; }
 
-    igraph_vector_t* getVec();
+
+    igraph_vector_t* igraph_vector();
     int size();
     void sort();
     void pop(int);
@@ -30,7 +30,6 @@ private:
 
 
 
-#include "vectorgraph.cpp"
 
 
 #endif // VECTORGRAH_H
