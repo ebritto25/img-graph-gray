@@ -6,7 +6,7 @@
 #include <fstream>
 #include <cmath>
 #include <QElapsedTimer>
-#include "vectorgraph.hpp"
+#include "vectorgraph.cpp"
 
 using namespace cv;
 using namespace std;
@@ -245,6 +245,9 @@ string atributeGenerator(string arg)
     igraph_vector_ptr_t vPath,ePath;
     igraph_vector_long_t pred,inbound;
     igraph_vs_t to[16];
+
+
+
 
     Mat image = imread(arg);
 

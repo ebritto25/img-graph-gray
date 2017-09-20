@@ -1,3 +1,4 @@
+#include "vectorgraph.hpp"
 
 VectorGraph::VectorGraph(int _size)
 {

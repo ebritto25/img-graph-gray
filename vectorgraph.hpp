@@ -28,7 +28,6 @@ private:
 
 
 
-#include "vectorgraph.cpp"
 
 
 #endif // VECTORGRAH_H
