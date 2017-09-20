@@ -354,9 +354,9 @@ string atributeGenerator_gray(string arg)
         avgVector((igraph_vector_t*)VECTOR(ePath)[0],vWeights.getVec(),&res);
     }
 
-    igraph_minimum_spanning_tree(&graph,&edges_mst,vWeights.getVec());
+//    igraph_minimum_spanning_tree(&graph,&edges_mst,vWeights.getVec());
 
-    avgVector(&edges_mst,vWeights.getVec(),&res);
+ //   avgVector(&edges_mst,vWeights.getVec(),&res);
     string str_res = print_vector(&res);
 
     cout << '\n';
@@ -438,7 +438,7 @@ int main(int argc, char* argv[])
          }
          else
         {
-            for(int j = 1; j <= 7; j++)
+            for(int j = 1; j <= 13; j++)
             {
 
                 for(int i = 0; i < 256/* 1024 terceira classe em diante*/; i++)
