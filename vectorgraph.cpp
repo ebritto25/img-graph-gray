@@ -9,7 +9,7 @@ VectorGraph::~VectorGraph()
     igraph_vector_destroy(&vec);
 }
 
-igraph_vector_t* VectorGraph::getVec()
+igraph_vector_t* VectorGraph::igraph_vector()
 {
     return &vec;
 }

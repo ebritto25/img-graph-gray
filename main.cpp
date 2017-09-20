@@ -11,6 +11,9 @@
 using namespace cv;
 using namespace std;
 
+#define IMAGEM_COLORIDA true
+#define IMAGEM_CINZA false
+
 void mostrarimg(Mat img)
 {
     namedWindow("Imagem");
@@ -31,24 +34,63 @@ igraph_t createGraph(Mat &imagem)
     return graph;
 }
 
-
-void gera_mat_adj(igraph_matrix_t* mat_adj,Mat& image,igraph_vector_t* weights)
+template <typename T>
+void define_pixels_destino(T& to,Mat& image,bool is_gray)
 {
+    if(is_gray)
+    {
+        const int ultimo_pixel_1  = (image.cols*image.rows) -1;
+        const int primeiro_pixel_ultima_1 = (image.cols*image.rows)-image.cols;
+        const int meio_vertical_1 = (image.cols*(5/2));
+        const int meio_horizontal_1 = ((image.cols*image.rows)/2) + (image.cols-1);
 
-   igraph_matrix_init(mat_adj,0,0);
-   igraph_matrix_add_cols(mat_adj,image.cols*image.rows);
-   igraph_matrix_add_rows(mat_adj,image.cols*image.rows);
+        //PIXELS DE DESTINO
+        igraph_vs_1(&to[0],ultimo_pixel_1); // ultimo pixel
+        igraph_vs_1(&to[1],primeiro_pixel_ultima_1); // primeiro pixel ultima linha primeira camada
+        igraph_vs_1(&to[2],meio_vertical_1); // meio vertical
+        igraph_vs_1(&to[3],meio_horizontal_1); // meio horizontal direita]]
 
-    for(int i = 0; i < image.rows*image.cols;i++)
-        for(int j = 0; j < image.rows*image.cols;j++)
-            MATRIX(*mat_adj,i,j) = image.at<uchar>(i/image.cols,i%image.rows) - image.at<uchar>(j/image.cols,j%image.rows);
 
-    int weight_index = 0;
+    }
+    else
+    {
+        const int ultimo_pixel = (  (image.cols*image.rows)-1)+(image.cols*image.rows*2) ;
+        const int primeiro_pixel_ultima = ((image.cols*image.rows)-image.cols)+(image.cols*image.rows*2);
+        const int ultimo_pixel_1  = (image.cols*image.rows) -1;
+        const int primeiro_pixel_ultima_1 = (image.cols*image.rows)-image.cols;
+        const int meio_vertical_1 = (image.cols*(5/2));
+        const int meio_horizontal_1 = ( (image.cols*image.rows)/2 ) + (image.cols-1);
 
-    for(int i = 0; i < image.rows*image.cols;i++)
-        for(int j = i+1; j < image.rows*image.cols;j++)
-                VECTOR(*weights)[weight_index++] = MATRIX(*mat_adj,i,j);
+        //PIXELS DE DESTINO
+
+        //caminhos geral
+        igraph_vs_1(&to[0],ultimo_pixel); // ultimo pixel
+        igraph_vs_1(&to[1],primeiro_pixel_ultima);// primeiro pixel ultima camada
+        igraph_vs_1(&to[2],primeiro_pixel_ultima_1); // primeiro pixel ultima linha primeira camada
+        igraph_vs_1(&to[3],ultimo_pixel_1); // ultimo pixel primeira camada
+
+        //primeira camada
+        igraph_vs_1(&to[4],ultimo_pixel_1); // ultimo pixel
+        igraph_vs_1(&to[5],primeiro_pixel_ultima_1); // primeiro pixel ultima linha primeira camada
+        igraph_vs_1(&to[6],meio_vertical_1); // meio vertical
+        igraph_vs_1(&to[7],meio_horizontal_1); // meio horizontal direita]]
+
+        //segunda camada
+        igraph_vs_1(&to[8],(ultimo_pixel_1+(image.cols*image.rows))); // ultimo pixel
+        igraph_vs_1(&to[9],( primeiro_pixel_ultima_1+(image.cols*image.rows))); //primeiro pixel ultima linha
+        igraph_vs_1(&to[10],(meio_vertical_1)+(image.cols*image.rows));
+        igraph_vs_1(&to[11],(meio_horizontal_1)+(image.cols*image.rows));
+
+        //terceira camada
+        igraph_vs_1(&to[12],(ultimo_pixel_1+(image.cols*image.rows*2))); // ultimo pixel
+        igraph_vs_1(&to[13],( primeiro_pixel_ultima_1+(image.cols*image.rows*2))); //primeiro pixel ultima linha
+        igraph_vs_1(&to[14],(meio_vertical_1)+(image.cols*image.rows*2));
+        igraph_vs_1(&to[15],(meio_horizontal_1)+(image.cols*image.rows*2));
+
+    }
+
 }
+
 
 
 int EWVector_gray(Mat & img,igraph_vector_t *edges,igraph_vector_t *weight)
@@ -198,8 +240,7 @@ void avgVector(igraph_vector_t *edges,igraph_vector_t *weights, igraph_vector_t 
 
 string atributeGenerator(string arg)
 {
-    igraph_t graph,mst;
-    igraph_vector_t edges,weights,res, edges_mst;
+    igraph_t graph;
 
     igraph_vector_ptr_t vPath,ePath;
     igraph_vector_long_t pred,inbound;
@@ -207,18 +248,13 @@ string atributeGenerator(string arg)
 
     Mat image = imread(arg);
 
-    const int ultimo_pixel = (  (image.cols*image.rows)-1)+(image.cols*image.rows*2) ;
-    const int primeiro_pixel_ultima = ((image.cols*image.rows)-image.cols)+(image.cols*image.rows*2);
-    const int ultimo_pixel_1  = (image.cols*image.rows) -1;
-    const int primeiro_pixel_ultima_1 = (image.cols*image.rows)-image.cols;
-    const int meio_vertical_1 = (image.cols*(5/2));
-    const int meio_horizontal_1 = ( (image.cols*image.rows)/2 ) + (image.cols-1);
 
     //INICIALIZAÇÃO DE VETORES
     VectorGraph vEdges((2*((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols))));
     VectorGraph vWeights((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols));
-    igraph_vector_init(&res,0);
-    igraph_vector_init(&edges_mst,0);
+    VectorGraph res;
+    VectorGraph edges_mst;
+
     igraph_vector_ptr_init(&vPath,1);
     igraph_vector_ptr_init(&ePath,1);
     igraph_vector_long_init(&pred,0);
@@ -234,8 +270,8 @@ string atributeGenerator(string arg)
 
     graph = createGraph(image);
 
-    EWVector(image,vEdges.getVec(),vWeights.getVec());
-    igraph_add_edges(&graph,vEdges.getVec(),0);
+    EWVector(image,&vEdges,&vWeights);
+    igraph_add_edges(&graph,&vEdges,0);
 
     //PIXELS DE PARTIDA
     int from[] = {0,(image.cols-1),(image.cols-1 + image.cols*image.rows * 2),(image.cols*image.rows*2),
@@ -243,41 +279,17 @@ string atributeGenerator(string arg)
                     image.cols*image.rows,(image.cols-1)+(image.cols*image.rows),(image.cols/2)+(image.cols*image.rows),image.cols*(image.rows/2)+(image.cols*image.rows),
                     image.cols*image.rows*2,(image.cols-1)+(image.cols*image.rows*2),(image.cols/2)+(image.cols*image.rows*2),image.cols*(image.rows/2)+(image.cols*image.rows*2)};
 
-    //PIXELS DE DESTINO
-
-    //caminhos geral
-    igraph_vs_1(&to[0],ultimo_pixel); // ultimo pixel
-    igraph_vs_1(&to[1],primeiro_pixel_ultima);// primeiro pixel ultima camada
-    igraph_vs_1(&to[2],primeiro_pixel_ultima_1); // primeiro pixel ultima linha primeira camada
-    igraph_vs_1(&to[3],ultimo_pixel_1); // ultimo pixel primeira camada
-
-    //primeira camada
-    igraph_vs_1(&to[4],ultimo_pixel_1); // ultimo pixel
-    igraph_vs_1(&to[5],primeiro_pixel_ultima_1); // primeiro pixel ultima linha primeira camada
-    igraph_vs_1(&to[6],meio_vertical_1); // meio vertical
-    igraph_vs_1(&to[7],meio_horizontal_1); // meio horizontal direita]]
-
-    //segunda camada
-    igraph_vs_1(&to[8],(ultimo_pixel_1+(image.cols*image.rows))); // ultimo pixel
-    igraph_vs_1(&to[9],( primeiro_pixel_ultima_1+(image.cols*image.rows))); //primeiro pixel ultima linha
-    igraph_vs_1(&to[10],(meio_vertical_1)+(image.cols*image.rows));
-    igraph_vs_1(&to[11],(meio_horizontal_1)+(image.cols*image.rows));
-
-    //terceira camada
-    igraph_vs_1(&to[12],(ultimo_pixel_1+(image.cols*image.rows*2))); // ultimo pixel
-    igraph_vs_1(&to[13],( primeiro_pixel_ultima_1+(image.cols*image.rows*2))); //primeiro pixel ultima linha
-    igraph_vs_1(&to[14],(meio_vertical_1)+(image.cols*image.rows*2));
-    igraph_vs_1(&to[15],(meio_horizontal_1)+(image.cols*image.rows*2));
+     define_pixels_destino(to,image,IMAGEM_COLORIDA);
 
     //CALCULA E IMPRIME MENOR CAMINHO
     for(int i = 0;i < 16;i++)
     {
-        igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from[i],to[i],vWeights.getVec(),IGRAPH_ALL,&pred,&inbound);
-        avgVector((igraph_vector_t*)VECTOR(ePath)[0],vWeights.getVec(),&res);
+        igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from[i],to[i],&vWeights,IGRAPH_ALL,&pred,&inbound);
+        avgVector((igraph_vector_t*)VECTOR(ePath)[0],&vWeights,&res);
     }
 
-    igraph_minimum_spanning_tree(&graph,&edges_mst,vWeights.getVec());
-    avgVector(&edges_mst,vWeights.getVec(),&res);
+    igraph_minimum_spanning_tree(&graph,&edges_mst,&vWeights);
+    avgVector(&edges_mst,&vWeights,&res);
 
     string str_res = print_vector(&res);
 
@@ -289,9 +301,7 @@ string atributeGenerator(string arg)
     igraph_vector_destroy((igraph_vector_t*)VECTOR(ePath)[0]);
     igraph_vector_ptr_destroy(&vPath);
     igraph_vector_ptr_destroy(&ePath);
-    igraph_vector_destroy(&res);
     igraph_destroy(&graph);
-    igraph_vector_destroy(&edges_mst);
 
     return str_res;
 }
@@ -299,8 +309,7 @@ string atributeGenerator(string arg)
 string atributeGenerator_gray(string arg)
 {
 
-    igraph_t graph, mst;
-    igraph_vector_t edges,weights,res,edges_mst;
+    igraph_t graph;
 
     igraph_vector_ptr_t vPath,ePath;
     igraph_vector_long_t pred,inbound;
@@ -309,16 +318,12 @@ string atributeGenerator_gray(string arg)
     Mat image = imread(arg);
     cvtColor(image,image,COLOR_RGB2GRAY);
 
-    const int ultimo_pixel_1  = (image.cols*image.rows) -1;
-    const int primeiro_pixel_ultima_1 = (image.cols*image.rows)-image.cols;
-    const int meio_vertical_1 = (image.cols*(5/2));
-    const int meio_horizontal_1 = ( (image.cols*image.rows)/2 ) + (image.cols-1);
-
     //INICIALIZAÇÃO DE VETORES
     VectorGraph vEdges((2*((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols))));
     VectorGraph vWeights((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols));
-    igraph_vector_init(&res,0);
-    igraph_vector_init(&edges_mst,0);
+    VectorGraph res;
+    VectorGraph edges_mst;
+
     igraph_vector_ptr_init(&vPath,1);
     igraph_vector_ptr_init(&ePath,1);
     igraph_vector_long_init(&pred,0);
@@ -335,28 +340,27 @@ string atributeGenerator_gray(string arg)
     graph = createGraph(image);
 
 
-    EWVector_gray(image,vEdges.getVec(),vWeights.getVec());
-    igraph_add_edges(&graph,vEdges.getVec(),0);
+    EWVector_gray(image,&vEdges,&vWeights);
+    igraph_add_edges(&graph,&vEdges,0);
 
     //PIXELS DE PARTIDA
     int from_gray[] {0,(image.cols-1),image.cols/2,image.cols*(image.rows/2)};
 
-    //PIXELS DE DESTINO
-    igraph_vs_1(&to[0],ultimo_pixel_1); // ultimo pixel
-    igraph_vs_1(&to[1],primeiro_pixel_ultima_1); // primeiro pixel ultima linha primeira camada
-    igraph_vs_1(&to[2],meio_vertical_1); // meio vertical
-    igraph_vs_1(&to[3],meio_horizontal_1); // meio horizontal direita]]
+    define_pixels_destino(to,image,IMAGEM_COLORIDA);
+
 
     //CALCULA E IMPRIME MENOR CAMINHO
     for(int i = 0;i < 4;i++)
     {
-        igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from_gray[i],to[i],vWeights.getVec(),IGRAPH_ALL,&pred,&inbound);
-        avgVector((igraph_vector_t*)VECTOR(ePath)[0],vWeights.getVec(),&res);
+        igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from_gray[i],to[i],&vWeights,IGRAPH_ALL,&pred,&inbound);
+        avgVector((igraph_vector_t*)VECTOR(ePath)[0],&vWeights,&res);
     }
 
-//    igraph_minimum_spanning_tree(&graph,&edges_mst,vWeights.getVec());
+    igraph_minimum_spanning_tree(&graph,&edges_mst,&vWeights);
 
- //   avgVector(&edges_mst,vWeights.getVec(),&res);
+    avgVector(&edges_mst,&vWeights,&res);
+
+
     string str_res = print_vector(&res);
 
     cout << '\n';
@@ -368,9 +372,7 @@ string atributeGenerator_gray(string arg)
     igraph_vector_destroy((igraph_vector_t*)VECTOR(ePath)[0]);
     igraph_vector_ptr_destroy(&vPath);
     igraph_vector_ptr_destroy(&ePath);
-    igraph_vector_destroy(&res);
     igraph_destroy(&graph);
-    igraph_vector_destroy(&edges_mst);
 
     return str_res;
 
