@@ -7,6 +7,32 @@
 using namespace cv;
 using namespace std;
 
+// gera uma matriz de adjacência a partir de uma dada imagem(image)
+void gera_mat_adj(igraph_matrix_t* mat_adj,Mat& image,igraph_vector_t* weights)
+{
+
+	igraph_matrix_init(mat_adj,0,0);
+	igraph_matrix_add_cols(mat_adj,image.cols*image.rows);
+	igraph_matrix_add_rows(mat_adj,image.cols*image.rows);
+
+
+	for(int i = 0; i < image.rows*image.cols;i++)
+		for(int j = 0; j < image.rows*image.cols;j++)
+			MATRIX(*mat_adj,i,j) = image.at<uchar>(i/image.cols,i%image.rows) - image.at<uchar>(j/image.cols,j%image.rows);
+
+	int weight_index = 0;
+
+	for(int i = 0; i < image.rows*image.cols;i++)
+	{
+		for(int j = i+1; j < image.rows*image.cols;j++)
+		{
+		    VECTOR(*weights)[weight_index] = MATRIX(*mat_adj,i,j);
+		}
+		weight_index++;
+	}
+
+}
+
 // mostra a imagem(img)
 void mostra_img(Mat img)
 {
@@ -283,6 +309,7 @@ string atributeGenerator(string arg)
     graph = createGraph(image);
 
     EWVector(image,&vEdges,&vWeights);
+    
     igraph_add_edges(&graph,&vEdges,0);
 
     //PIXELS DE PARTIDA
@@ -351,11 +378,20 @@ string atributeGenerator_gray(string arg)
     igraph_vector_init((igraph_vector_t*)VECTOR(ePath)[0], 0);
 
 
-    graph = createGraph(image);
+    igraph_matrix_t mat_adj;
 
 
-    EWVector_gray(image,&vEdges,&vWeights);
-    igraph_add_edges(&graph,&vEdges,0);
+    gera_mat_adj(&mat_adj,image,&vWeights);
+
+
+//    graph = createGraph(image);
+
+    igraph_weighted_adjacency(&graph,&mat_adj,IGRAPH_ADJ_MAX,NULL,0);
+
+    cout << "Criado grafo "<< igraph_vcount(&graph) << " nós\n";
+
+   // EWVector_gray(image,&vEdges,&vWeights);
+    //igraph_add_edges(&graph,&vEdges,0);
 
     //PIXELS DE PARTIDA
     int from_gray[] {0,(image.cols-1),image.cols/2,image.cols*(image.rows/2)};
