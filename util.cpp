@@ -1,8 +1,8 @@
 #include <opencv2/opencv.hpp>
 #include "vectorgraph.hpp"
 
-#define IMAGEM_COLORIDA true
-#define IMAGEM_CINZA false
+#define IMAGEM_COLORIDA false
+#define IMAGEM_CINZA true
 
 using namespace cv;
 using namespace std;
@@ -24,7 +24,7 @@ void gera_mat_adj(igraph_matrix_t* mat_adj,Mat& image,igraph_vector_t* weights)
 
 	for(int i = 0; i < image.rows*image.cols;i++)
 	{
-		for(int j = i+1; j < image.rows*image.cols;j++)
+        for(int j = i+1; j < image.rows*image.cols-1;j++)
 		{
 		    VECTOR(*weights)[weight_index] = MATRIX(*mat_adj,i,j);
 		}
@@ -361,7 +361,7 @@ string atributeGenerator_gray(string arg)
 
     //INICIALIZAÇÃO DE VETORES
     VectorGraph vEdges((2*((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols))));
-    VectorGraph vWeights((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols));
+    VectorGraph vWeights((2*image.cols*image.rows-image.cols-image.rows)+(2*image.rows*image.cols));
     VectorGraph res;
     VectorGraph edges_mst;
 
@@ -377,26 +377,18 @@ string atributeGenerator_gray(string arg)
     igraph_vector_init((igraph_vector_t*)VECTOR(vPath)[0], 0);
     igraph_vector_init((igraph_vector_t*)VECTOR(ePath)[0], 0);
 
+    graph = createGraph(image);
 
-    igraph_matrix_t mat_adj;
-
-
-    gera_mat_adj(&mat_adj,image,&vWeights);
-
-
-//    graph = createGraph(image);
-
-    igraph_weighted_adjacency(&graph,&mat_adj,IGRAPH_ADJ_MAX,NULL,0);
 
     cout << "Criado grafo "<< igraph_vcount(&graph) << " nós\n";
 
-   // EWVector_gray(image,&vEdges,&vWeights);
-    //igraph_add_edges(&graph,&vEdges,0);
+    EWVector_gray(image,&vEdges,&vWeights);
+    igraph_add_edges(&graph,&vEdges,0);
 
     //PIXELS DE PARTIDA
     int from_gray[] {0,(image.cols-1),image.cols/2,image.cols*(image.rows/2)};
 
-    define_pixels_destino(to,image,IMAGEM_COLORIDA);
+    define_pixels_destino(to,image,IMAGEM_CINZA);
 
 
     //CALCULA E IMPRIME MENOR CAMINHO
@@ -409,7 +401,6 @@ string atributeGenerator_gray(string arg)
     igraph_minimum_spanning_tree(&graph,&edges_mst,&vWeights);
 
     avgVector(&edges_mst,&vWeights,&res);
-
 
     string str_res = gera_vector_arff(&res);
 
