@@ -313,15 +313,6 @@ string atributeGenerator(string arg,T to,X from)
     igraph_add_edges(&graph,&vEdges,0);
 
     //PIXELS DE PARTIDA
-<<<<<<< HEAD
-    const int from[] = {0,(image.cols-1),(image.cols-1 + image.cols*image.rows * 2),(image.cols*image.rows*2),
-                  0,(image.cols-1),image.cols/2,image.cols*(image.rows/2),
-                    image.cols*image.rows,(image.cols-1)+(image.cols*image.rows),(image.cols/2)+(image.cols*image.rows),image.cols*(image.rows/2)+(image.cols*image.rows),
-                    image.cols*image.rows*2,(image.cols-1)+(image.cols*image.rows*2),(image.cols/2)+(image.cols*image.rows*2),image.cols*(image.rows/2)+(image.cols*image.rows*2)};
-
-     define_pixels_destino(to,image,IMAGEM_COLORIDA);
-=======
->>>>>>> bf7a15d712dfaa1a46a02bfeb938f63285bd5771
 
     std::cerr << "CHEGOU\n";
     //CALCULA E IMPRIME MENOR CAMINHO
@@ -402,9 +393,9 @@ string atributeGenerator_gray(string arg)
         avgVector((igraph_vector_t*)VECTOR(ePath)[0],&vWeights,&res);
     }
 
-    ////igraph_minimum_spanning_tree(&graph,&edges_mst,&vWeights);
+    igraph_minimum_spanning_tree(&graph,&edges_mst,&vWeights);
 
-    //avgVector(&edges_mst,&vWeights,&res);
+    avgVector(&edges_mst,&vWeights,&res);
 
     string str_res = gera_vector_arff(&res);
 
