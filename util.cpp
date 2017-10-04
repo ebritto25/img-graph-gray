@@ -273,13 +273,13 @@ void avgVector(igraph_vector_t *edges,igraph_vector_t *weights, igraph_vector_t 
 }
 
 //gera o arquivo arff de uma determinada imagem
-string atributeGenerator(string arg)
+template<typename T, typename X>
+string atributeGenerator(string arg,T to,X from)
 {
     igraph_t graph;
 
     igraph_vector_ptr_t vPath,ePath;
     igraph_vector_long_t pred,inbound;
-    igraph_vs_t to[16];
 
 
 
@@ -313,17 +313,21 @@ string atributeGenerator(string arg)
     igraph_add_edges(&graph,&vEdges,0);
 
     //PIXELS DE PARTIDA
+<<<<<<< HEAD
     const int from[] = {0,(image.cols-1),(image.cols-1 + image.cols*image.rows * 2),(image.cols*image.rows*2),
                   0,(image.cols-1),image.cols/2,image.cols*(image.rows/2),
                     image.cols*image.rows,(image.cols-1)+(image.cols*image.rows),(image.cols/2)+(image.cols*image.rows),image.cols*(image.rows/2)+(image.cols*image.rows),
                     image.cols*image.rows*2,(image.cols-1)+(image.cols*image.rows*2),(image.cols/2)+(image.cols*image.rows*2),image.cols*(image.rows/2)+(image.cols*image.rows*2)};
 
      define_pixels_destino(to,image,IMAGEM_COLORIDA);
+=======
+>>>>>>> bf7a15d712dfaa1a46a02bfeb938f63285bd5771
 
+    std::cerr << "CHEGOU\n";
     //CALCULA E IMPRIME MENOR CAMINHO
     for(int i = 0;i < 16;i++)
     {
-        igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from[i],to[i],&vWeights,IGRAPH_ALL,&pred,&inbound);
+        igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from[i],to[i],&vWeights,IGRAPH_ALL,NULL,NULL);
         avgVector((igraph_vector_t*)VECTOR(ePath)[0],&vWeights,&res);
     }
 
@@ -340,6 +344,8 @@ string atributeGenerator(string arg)
     igraph_vector_destroy((igraph_vector_t*)VECTOR(ePath)[0]);
     igraph_vector_ptr_destroy(&vPath);
     igraph_vector_ptr_destroy(&ePath);
+    igraph_vector_long_destroy(&pred);
+    igraph_vector_long_destroy(&inbound);
     igraph_destroy(&graph);
 
     return str_res;
@@ -353,7 +359,7 @@ string atributeGenerator_gray(string arg)
     igraph_t graph;
 
     igraph_vector_ptr_t vPath,ePath;
-    igraph_vector_long_t pred,inbound;
+
     igraph_vs_t to[4];
 
     Mat image = imread(arg);
@@ -367,8 +373,6 @@ string atributeGenerator_gray(string arg)
 
     igraph_vector_ptr_init(&vPath,1);
     igraph_vector_ptr_init(&ePath,1);
-    igraph_vector_long_init(&pred,0);
-    igraph_vector_long_init(&inbound,0);
 
 
     VECTOR(vPath)[0] = calloc(1,sizeof(igraph_vector_t));
@@ -394,7 +398,7 @@ string atributeGenerator_gray(string arg)
     //CALCULA E IMPRIME MENOR CAMINHO
     for(int i = 0;i < 4;i++)
     {
-        igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from_gray[i],to[i],&vWeights,IGRAPH_ALL,&pred,&inbound);
+        igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from_gray[i],to[i],&vWeights,IGRAPH_ALL,NULL,NULL);
         avgVector((igraph_vector_t*)VECTOR(ePath)[0],&vWeights,&res);
     }
 
