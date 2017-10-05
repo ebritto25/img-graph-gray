@@ -6,6 +6,8 @@
 class VectorGraph
 {
 public:
+
+
     VectorGraph(int _size = 0);
 
     ~VectorGraph();

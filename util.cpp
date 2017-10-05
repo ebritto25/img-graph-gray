@@ -1,8 +1,8 @@
 #include <opencv2/opencv.hpp>
+#include "image_base.h"
+#include <mutex>
+#include <thread>
 #include "vectorgraph.hpp"
-
-#define IMAGEM_COLORIDA false
-#define IMAGEM_CINZA true
 
 using namespace cv;
 using namespace std;
@@ -30,6 +30,70 @@ void gera_mat_adj(igraph_matrix_t* mat_adj,Mat& image,igraph_vector_t* weights)
 		}
 		weight_index++;
 	}
+
+}
+
+std::mutex mt;
+// extrai valores de uma dada base de imagem
+void extrai_valor(int folder,image_base& base)
+{
+    Mat image = imread(base.get_image_in_folder(folder,base.get_image_base_type(),0));
+
+    stringstream values;
+
+    if( base.get_image_base_type() == image_base::TYPE::RSSCN)
+    {
+        if(base.color() == image_base::COLOR::RGB )
+        {
+            int from[] = {0,(image.cols-1),(image.cols-1 + image.cols*image.rows * 2),(image.cols*image.rows*2),
+                    0,(image.cols-1),image.cols/3,image.cols*(image.rows/2),
+                      image.cols*image.rows,(image.cols-1)+(image.cols*image.rows),(image.cols/2)+(image.cols*image.rows),image.cols*(image.rows/2)+(image.cols*image.rows),
+                      image.cols*image.rows*2,(image.cols-1)+(image.cols*image.rows*2),(image.cols/2)+(image.cols*image.rows*2),image.cols*(image.rows/2)+(image.cols*image.rows*2)};
+
+            igraph_vs_t to[16];
+
+            define_pixels_destino(to,image,base.color());
+
+
+            for(int i = 0; i < base.images(); i++)
+            {
+                string img_str  = base.get_image_in_folder(folder,base.get_image_base_type(),i);
+
+                string temp = atributeGenerator(img_str,to,from);
+                temp += "class_"+to_string(folder)+"\n";
+
+                values << temp;
+            }
+
+
+            for(int i = 0 ; i < 16; i++)
+              igraph_vs_destroy(&to[i]);
+        }
+        else
+        {
+            int from[] = {0,(image.cols-1),image.cols/2,image.cols*(image.rows/2)};
+            igraph_vs_t to[4];
+            define_pixels_destino(to,image,base.color());
+
+            for(int i = 0; i < base.images(); i++)
+            {
+                string img_str = base.get_image_in_folder(folder,base.get_image_base_type(),i);
+
+                string temp = atributeGenerator_gray(img_str,to,from);
+                temp += "class_"+to_string(folder)+"\n";
+
+
+            }
+
+            for(int i = 0 ; i < 4; i++)
+              igraph_vs_destroy(&to[i]);
+
+        }
+    }
+
+    mt.lock();
+    base.put_in_arff_file(values.str());
+    mt.unlock();
 
 }
 
@@ -75,9 +139,9 @@ igraph_t createGraph(Mat &imagem)
 // define os pixels de partida
 // para o dijkstra
 template <typename T>
-void define_pixels_destino(T& to,Mat& image,bool is_gray)
+void define_pixels_destino(T& to,Mat& image,image_base::COLOR color)
 {
-    if(is_gray)
+    if(color == image_base::COLOR::GRAY)
     {
         const int ultimo_pixel_1  = (image.cols*image.rows) -1;
         const int primeiro_pixel_ultima_1 = (image.cols*image.rows)-image.cols;
@@ -272,17 +336,16 @@ void avgVector(igraph_vector_t *edges,igraph_vector_t *weights, igraph_vector_t 
     igraph_vector_push_back(res,des);
 }
 
-//gera o arquivo arff de uma determinada imagem
+//gera o arquivo arff de uma determinada imagem colorida
 template<typename T, typename X>
-string atributeGenerator(string arg,T to,X from)
+string atributeGenerator(string arg,T& to,X& from)
 {
     igraph_t graph;
 
     igraph_vector_ptr_t vPath,ePath;
-    igraph_vector_long_t pred,inbound;
 
 
-
+    std::cerr << arg << '\n';
 
     Mat image = imread(arg);
 
@@ -295,8 +358,6 @@ string atributeGenerator(string arg,T to,X from)
 
     igraph_vector_ptr_init(&vPath,1);
     igraph_vector_ptr_init(&ePath,1);
-    igraph_vector_long_init(&pred,0);
-    igraph_vector_long_init(&inbound,0);
 
 
     VECTOR(vPath)[0] = calloc(1,sizeof(igraph_vector_t));
@@ -335,8 +396,6 @@ string atributeGenerator(string arg,T to,X from)
     igraph_vector_destroy((igraph_vector_t*)VECTOR(ePath)[0]);
     igraph_vector_ptr_destroy(&vPath);
     igraph_vector_ptr_destroy(&ePath);
-    igraph_vector_long_destroy(&pred);
-    igraph_vector_long_destroy(&inbound);
     igraph_destroy(&graph);
 
     return str_res;
@@ -344,14 +403,14 @@ string atributeGenerator(string arg,T to,X from)
 
 //gera o arquivo arff de uma determinada imagem
 // em tons de cinza
-string atributeGenerator_gray(string arg)
+template<typename T, typename X>
+string atributeGenerator_gray(string arg,T& to, X& from)
 {
 
     igraph_t graph;
 
     igraph_vector_ptr_t vPath,ePath;
 
-    igraph_vs_t to[4];
 
     Mat image = imread(arg);
     cvtColor(image,image,COLOR_RGB2GRAY);
@@ -380,16 +439,10 @@ string atributeGenerator_gray(string arg)
     EWVector_gray(image,&vEdges,&vWeights);
     igraph_add_edges(&graph,&vEdges,0);
 
-    //PIXELS DE PARTIDA
-    int from_gray[] {0,(image.cols-1),image.cols/2,image.cols*(image.rows/2)};
-
-    define_pixels_destino(to,image,IMAGEM_CINZA);
-
-
     //CALCULA E IMPRIME MENOR CAMINHO
     for(int i = 0;i < 4;i++)
     {
-        igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from_gray[i],to[i],&vWeights,IGRAPH_ALL,NULL,NULL);
+        igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from[i],to[i],&vWeights,IGRAPH_ALL,NULL,NULL);
         avgVector((igraph_vector_t*)VECTOR(ePath)[0],&vWeights,&res);
     }
 
