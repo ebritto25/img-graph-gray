@@ -285,6 +285,7 @@ string atributeGenerator(string arg,T& to,X& from)
 
     igraph_vector_ptr_t vPath,ePath;
 
+    std::cerr << arg << '\n';
 
 
     Mat image = imread(arg);
@@ -312,7 +313,6 @@ string atributeGenerator(string arg,T& to,X& from)
 
     EWVector(image,&vEdges,&vWeights);
     
-    std::cerr << "TESTE: " << sizeof(from)/sizeof(int) << '\n';
     igraph_add_edges(&graph,&vEdges,0);
 
     //CALCULA E IMPRIME MENOR CAMINHO
@@ -321,7 +321,7 @@ string atributeGenerator(string arg,T& to,X& from)
         igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from[i],to[i],&vWeights,IGRAPH_ALL,NULL,NULL);
         avgVector((igraph_vector_t*)VECTOR(ePath)[0],&vWeights,&res);
     }
-    std::cerr << "CHEGOU AQUI!\n";
+
     igraph_minimum_spanning_tree(&graph,&edges_mst,&vWeights);
     avgVector(&edges_mst,&vWeights,&res);
     string str_res = gera_vector_arff(&res);
