@@ -1,8 +1,12 @@
 #include <opencv2/opencv.hpp>
 #include "image_base.h"
 #include <mutex>
+#include <iostream>
+#include <functional>
 #include <thread>
 #include "vectorgraph.hpp"
+
+#define DB(X) std::cerr << #X << '=' << X << '\n';
 
 using namespace cv;
 using namespace std;
@@ -282,7 +286,6 @@ string atributeGenerator(string arg,T& to,X& from)
     igraph_vector_ptr_t vPath,ePath;
 
 
-    std::cerr << arg << '\n';
 
     Mat image = imread(arg);
 
@@ -297,6 +300,7 @@ string atributeGenerator(string arg,T& to,X& from)
     igraph_vector_ptr_init(&ePath,1);
 
 
+
     VECTOR(vPath)[0] = calloc(1,sizeof(igraph_vector_t));
     VECTOR(ePath)[0] = calloc(1,sizeof(igraph_vector_t));
 
@@ -308,9 +312,8 @@ string atributeGenerator(string arg,T& to,X& from)
 
     EWVector(image,&vEdges,&vWeights);
     
+    std::cerr << "TESTE: " << sizeof(from)/sizeof(int) << '\n';
     igraph_add_edges(&graph,&vEdges,0);
-
-    //PIXELS DE PARTIDA
 
     //CALCULA E IMPRIME MENOR CAMINHO
     for(int i = 0;i < 16;i++)
@@ -318,12 +321,10 @@ string atributeGenerator(string arg,T& to,X& from)
         igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from[i],to[i],&vWeights,IGRAPH_ALL,NULL,NULL);
         avgVector((igraph_vector_t*)VECTOR(ePath)[0],&vWeights,&res);
     }
-
+    std::cerr << "CHEGOU AQUI!\n";
     igraph_minimum_spanning_tree(&graph,&edges_mst,&vWeights);
     avgVector(&edges_mst,&vWeights,&res);
-
     string str_res = gera_vector_arff(&res);
-
     cout << '\n';
 
 
@@ -370,7 +371,6 @@ string atributeGenerator_gray(string arg,T& to, X& from)
     graph = createGraph(image);
 
 
-    cout << "Criado grafo "<< igraph_vcount(&graph) << " nós\n";
 
     EWVector_gray(image,&vEdges,&vWeights);
     igraph_add_edges(&graph,&vEdges,0);
@@ -464,16 +464,92 @@ void extrai_valor(int folder,image_base& base)
     mt.unlock();
 
 }
+void extrai_valor_str(string folder,image_base& base)
+{
+    Mat image = imread(base.get_image_in_folder(folder,base.get_image_base_type(),0));
 
+    stringstream values;
+
+    if(base.color() == image_base::COLOR::RGB )
+    {
+        int from[] = {0,(image.cols-1),(image.cols-1 + image.cols*image.rows * 2),(image.cols*image.rows*2),
+            0,(image.cols-1),image.cols/3,image.cols*(image.rows/2),
+              image.cols*image.rows,(image.cols-1)+(image.cols*image.rows),(image.cols/2)+(image.cols*image.rows),image.cols*(image.rows/2)+(image.cols*image.rows),
+              image.cols*image.rows*2,(image.cols-1)+(image.cols*image.rows*2),(image.cols/2)+(image.cols*image.rows*2),image.cols*(image.rows/2)+(image.cols*image.rows*2)};
+
+        igraph_vs_t to[16];
+
+        define_pixels_destino(to,image,base.color());
+
+        for(int i = 0; i < base.images(); i++)
+        {
+            string img_str  = base.get_image_in_folder(folder,base.get_image_base_type(),i);
+
+            string temp = atributeGenerator(img_str,to,from);
+            temp += "class_"+folder+"\n";
+
+            values << temp;
+        }
+
+
+        for(int i = 0 ; i < 16; i++)
+          igraph_vs_destroy(&to[i]);
+    }
+    else
+    {
+        int from[] = {0,(image.cols-1),image.cols/2,image.cols*(image.rows/2)};
+
+        igraph_vs_t to[4];
+        define_pixels_destino(to,image,base.color());
+
+        for(int i = 0; i < base.images(); i++)
+        {
+            string img_str = base.get_image_in_folder(folder,base.get_image_base_type(),i);
+
+            string temp = atributeGenerator_gray(img_str,to,from);
+            temp += "class_"+folder+"\n";
+
+            values << temp;
+        }
+
+        for(int i = 0 ; i < 4; i++)
+          igraph_vs_destroy(&to[i]);
+
+    }
+
+
+    mt.lock();
+    base.put_in_arff_file(values.str());
+    mt.unlock();
+
+}
 void thread_handler(image_base& base)
 {
     std::vector<thread> threads;
 
 
     for(int i = 1; i <= base.folders(); i++)
+    {
+        std::cout << "Thread " << i <<'\n';
         threads.emplace_back(extrai_valor,i,std::ref(base));
+    }
 
     for(int i = 0; i < base.folders(); i++)
         threads[i].join();
 
+}
+void thread_handler(image_base& base,std::vector<string> folders)
+{
+    std::vector<thread> threads;
+
+
+    for(int i = 0; i < base.folders(); i++)
+    {
+        std::cout << "Thread " << i << " " << folders[i] <<'\n';
+        threads.emplace_back(extrai_valor_str,folders[i],std::ref(base));
+
+    }
+
+    for(int i = 0; i < base.folders(); i++)
+        threads[i].join();
 }

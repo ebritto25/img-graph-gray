@@ -73,13 +73,25 @@ image_base::COLOR image_base::color() const
     return color_scheme;
 }
 
+template<>
 string image_base::get_image_in_folder(int folder,image_base::TYPE type,int img_number)
 {
     std::stringstream ret;
     if(type == image_base::TYPE::RSSCN)
-        ret << path_to_folders << "/" << to_string(folder)<< "/" << char('a'+(folder-1)) << setfill('0') << setw(3) << to_string(img_number+1) << image_codec;
+        ret << path_to_folders << "/" << folder << "/" << char('a'+(folder-1)) << setfill('0') << setw(3) << img_number+1 << image_codec;
     else if(type == image_base::TYPE::BRODATZ)
-        ret << path_to_folders << "/" << to_string(folder)<< "/output" << folder  << "_" << to_string(img_number) << image_codec;
+        ret << path_to_folders << "/" << folder << "/output" << folder  << "_" << img_number << image_codec;
+
+
+    return ret.str();
+}
+
+template<> // Base UCM
+string image_base::get_image_in_folder(string folder,image_base::TYPE type,int img_number)
+{
+    std::stringstream ret;
+
+    ret << path_to_folders << "/" << folder << "/" << folder << setfill('0') << setw(2) << img_number  << image_codec;
 
 
     return ret.str();

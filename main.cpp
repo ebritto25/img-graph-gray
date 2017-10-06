@@ -1,8 +1,7 @@
 #include <QCoreApplication>
-#include <iostream>
 #include <cmath>
+#include <istream>
 #include "util.cpp"
-
 
 
 /*
@@ -35,15 +34,35 @@ int main(int argc, char* argv[])
         exit(-1);
 
 
+    // Caso especial base UCMERCED
+        ifstream File;
+        File.open("../UCMerced_LandUse/Images/folders_.txt");
+        if(!File.is_open())
+        {
+            cerr << "Problema ao Abrir Nomes das Pastas" << '\n';
+            exit(EXIT_FAILURE);
+        }
+        std::vector<string> folders_name;
+        std::istream_iterator<string> eos;
+        std::istream_iterator<string> input(File);
+        std::copy(input,eos,std::back_inserter(folders_name));
+     //
 
-    int number_folders = 13, number_images = 256;
 
-    string path = argv[1],str_out;
-    string image_codec = ".tiff";
+
+    for(auto folder : folders_name)
+        DB(folder);
+
+
+    DB(folders_name.size());
+    int number_folders = 21, number_images = 100;
+
+    string path = argv[1];
+    string image_codec = ".tif";
 
 
     image_base base{image_codec,path,number_folders,number_images,
-                image_base::TYPE::BRODATZ,image_base::COLOR::GRAY};
+                image_base::TYPE::UCM,image_base::COLOR::RGB};
 
     if(!base.create_arff_file(argv[2]))
     {
@@ -51,6 +70,6 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-    thread_handler(base);
+    thread_handler(base,folders_name);
 
 }

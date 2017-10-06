@@ -13,7 +13,7 @@ using namespace std;
 class image_base
 {
 public:
-    enum class TYPE {BRODATZ,RSSCN};
+    enum class TYPE {BRODATZ,RSSCN,UCM};
     enum class COLOR {GRAY, RGB};
 
     image_base(string codec,string path_folder, int folders, int images,TYPE type,COLOR scheme)
@@ -48,7 +48,8 @@ public:
     void set_base_color(COLOR scheme);
     COLOR color() const ;
 
-    string get_image_in_folder(int,TYPE,int);
+    template<typename Folder_Type>
+    string get_image_in_folder(Folder_Type,TYPE,int);
 
 
 private:
