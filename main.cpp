@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
 
 
     DB(folders_name.size());
-    int number_folders = 21, number_images = 100;
+    int number_folders = 20, number_images = 100;
 
     string path = argv[1];
     string image_codec = ".tif";

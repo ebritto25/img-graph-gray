@@ -278,8 +278,7 @@ void avgVector(igraph_vector_t *edges,igraph_vector_t *weights, igraph_vector_t 
 }
 
 //gera o arquivo arff de uma determinada imagem colorida
-template<typename T, typename X>
-string atributeGenerator(string arg,T& to,X& from)
+string atributeGenerator(string arg,image_base& base)
 {
     igraph_t graph;
 
@@ -288,8 +287,15 @@ string atributeGenerator(string arg,T& to,X& from)
     std::cerr << arg << '\n';
 
 
-    Mat image = imread(arg);
+    igraph_vs_t to[16];
 
+    Mat image = imread(arg);
+    int from[] = {0,(image.cols-1),(image.cols-1 + image.cols*image.rows * 2),(image.cols*image.rows*2),
+        0,(image.cols-1),image.cols/3,image.cols*(image.rows/2),
+          image.cols*image.rows,(image.cols-1)+(image.cols*image.rows),(image.cols/2)+(image.cols*image.rows),image.cols*(image.rows/2)+(image.cols*image.rows),
+          image.cols*image.rows*2,(image.cols-1)+(image.cols*image.rows*2),(image.cols/2)+(image.cols*image.rows*2),image.cols*(image.rows/2)+(image.cols*image.rows*2)};
+
+    define_pixels_destino(to,image,base.color());
 
     //INICIALIZAÇÃO DE VETORES
     VectorGraph vEdges((2*((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols))));
@@ -335,21 +341,27 @@ string atributeGenerator(string arg,T& to,X& from)
     igraph_vector_ptr_destroy(&ePath);
     igraph_destroy(&graph);
 
+    for(int i = 0 ; i < 16; i++)
+      igraph_vs_destroy(&to[i]);
+
     return str_res;
 }
 
 //gera o arquivo arff de uma determinada imagem
 // em tons de cinza
-template<typename T, typename X>
-string atributeGenerator_gray(string arg,T& to, X& from)
+string atributeGenerator_gray(string arg,image_base& base)
 {
 
     igraph_t graph;
-
     igraph_vector_ptr_t vPath,ePath;
 
-
     Mat image = imread(arg);
+
+    int from[] = {0,(image.cols-1),image.cols/2,image.cols*(image.rows/2)};
+    igraph_vs_t to[4];
+
+    define_pixels_destino(to,image,base.color());
+
     cvtColor(image,image,COLOR_RGB2GRAY);
 
     //INICIALIZAÇÃO DE VETORES
@@ -399,6 +411,9 @@ string atributeGenerator_gray(string arg,T& to, X& from)
     igraph_vector_ptr_destroy(&ePath);
     igraph_destroy(&graph);
 
+    for(int i = 0 ; i < 4; i++)
+      igraph_vs_destroy(&to[i]);
+
     return str_res;
 
 }
@@ -413,48 +428,32 @@ void extrai_valor(int folder,image_base& base)
 
     if(base.color() == image_base::COLOR::RGB )
     {
-        int from[] = {0,(image.cols-1),(image.cols-1 + image.cols*image.rows * 2),(image.cols*image.rows*2),
-            0,(image.cols-1),image.cols/3,image.cols*(image.rows/2),
-              image.cols*image.rows,(image.cols-1)+(image.cols*image.rows),(image.cols/2)+(image.cols*image.rows),image.cols*(image.rows/2)+(image.cols*image.rows),
-              image.cols*image.rows*2,(image.cols-1)+(image.cols*image.rows*2),(image.cols/2)+(image.cols*image.rows*2),image.cols*(image.rows/2)+(image.cols*image.rows*2)};
-
-        igraph_vs_t to[16];
-
-        define_pixels_destino(to,image,base.color());
 
 
         for(int i = 0; i < base.images(); i++)
         {
             string img_str  = base.get_image_in_folder(folder,base.get_image_base_type(),i);
 
-            string temp = atributeGenerator(img_str,to,from);
+            string temp = atributeGenerator(img_str,base);
             temp += "class_"+to_string(folder)+"\n";
 
             values << temp;
         }
 
-
-        for(int i = 0 ; i < 16; i++)
-          igraph_vs_destroy(&to[i]);
     }
     else
     {
-        int from[] = {0,(image.cols-1),image.cols/2,image.cols*(image.rows/2)};
-        igraph_vs_t to[4];
-        define_pixels_destino(to,image,base.color());
 
         for(int i = 0; i < base.images(); i++)
         {
             string img_str = base.get_image_in_folder(folder,base.get_image_base_type(),i);
 
-            string temp = atributeGenerator_gray(img_str,to,from);
+            string temp = atributeGenerator_gray(img_str,base);
             temp += "class_"+to_string(folder)+"\n";
 
             values << temp;
         }
 
-        for(int i = 0 ; i < 4; i++)
-          igraph_vs_destroy(&to[i]);
 
     }
 
@@ -472,48 +471,34 @@ void extrai_valor_str(string folder,image_base& base)
 
     if(base.color() == image_base::COLOR::RGB )
     {
-        int from[] = {0,(image.cols-1),(image.cols-1 + image.cols*image.rows * 2),(image.cols*image.rows*2),
-            0,(image.cols-1),image.cols/3,image.cols*(image.rows/2),
-              image.cols*image.rows,(image.cols-1)+(image.cols*image.rows),(image.cols/2)+(image.cols*image.rows),image.cols*(image.rows/2)+(image.cols*image.rows),
-              image.cols*image.rows*2,(image.cols-1)+(image.cols*image.rows*2),(image.cols/2)+(image.cols*image.rows*2),image.cols*(image.rows/2)+(image.cols*image.rows*2)};
 
-        igraph_vs_t to[16];
-
-        define_pixels_destino(to,image,base.color());
 
         for(int i = 0; i < base.images(); i++)
         {
             string img_str  = base.get_image_in_folder(folder,base.get_image_base_type(),i);
 
-            string temp = atributeGenerator(img_str,to,from);
+            string temp = atributeGenerator(img_str,base);
             temp += "class_"+folder+"\n";
 
             values << temp;
         }
 
 
-        for(int i = 0 ; i < 16; i++)
-          igraph_vs_destroy(&to[i]);
     }
     else
     {
-        int from[] = {0,(image.cols-1),image.cols/2,image.cols*(image.rows/2)};
 
-        igraph_vs_t to[4];
-        define_pixels_destino(to,image,base.color());
 
         for(int i = 0; i < base.images(); i++)
         {
             string img_str = base.get_image_in_folder(folder,base.get_image_base_type(),i);
 
-            string temp = atributeGenerator_gray(img_str,to,from);
+            string temp = atributeGenerator_gray(img_str,base);
             temp += "class_"+folder+"\n";
 
             values << temp;
         }
 
-        for(int i = 0 ; i < 4; i++)
-          igraph_vs_destroy(&to[i]);
 
     }
 
