@@ -5,44 +5,7 @@
 
 
 
-enum class BASE { BRODATZ, RSSCN };
 /*
-void base_imagem(BASE base_imagem,string  image_codec, string path_folder, string path, int numero_classes, int numero_imagens,bool imagem_colorida,ofstream& File)
-{
-        string str_out;
-    std::vector<thread> threads;
-
-    switch(base_imagem)
-    {
-
-            case BASE::BRODATZ :
-        for(int j = 1; j <= numero_classes; j++)
-        {
-
-            for(int i = 0; i < numero_imagens; i++)
-            {
-                    std::cout << "Imagem BROADTZ:  " << i+1<< " de 256 CLASSE: " << j << '\n';
-                        str_out = atributeGenerator_gray(path+"/"+path_folder+to_string(j)+"/"+"output"+to_string(j)+"_"+to_string(i)+image_codec);
-                    str_out += path_folder+to_string(j)+"\n";
-                    File << str_out;
-            }
-        }
-        break;
-
-      case BASE::RSSCN:
-
-
-        for(int j = 1; j <= numero_classes; j++)
-        {
-          //  if(j!=5)
-                //threads.emplace_back(extrai_valor,j,numero_imagens,image_codec,path,path_folder,std::ref(File),true);
-        }
-
-        for(int j = 1; j <= numero_classes; j++)
-            //threads[j].join();
-
-        break;
-
       default:
         for(int j = 1;j <= 10;j++)
         {
@@ -73,14 +36,14 @@ int main(int argc, char* argv[])
 
 
 
-    int number_folders = 7, number_images = 400;
+    int number_folders = 13, number_images = 256;
+
     string path = argv[1],str_out;
-    string path_to_images = "sub_class";
-    string image_codec = ".jpg";
+    string image_codec = ".tiff";
 
 
-    image_base base{image_codec,path,path_to_images,number_folders,number_images,
-                image_base::TYPE::RSSCN,image_base::COLOR::RGB};
+    image_base base{image_codec,path,number_folders,number_images,
+                image_base::TYPE::BRODATZ,image_base::COLOR::GRAY};
 
     if(!base.create_arff_file(argv[2]))
     {
@@ -88,7 +51,6 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-    extrai_valor(1,base);
-
+    thread_handler(base);
 
 }

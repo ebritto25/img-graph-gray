@@ -33,69 +33,6 @@ void gera_mat_adj(igraph_matrix_t* mat_adj,Mat& image,igraph_vector_t* weights)
 
 }
 
-std::mutex mt;
-// extrai valores de uma dada base de imagem
-void extrai_valor(int folder,image_base& base)
-{
-    Mat image = imread(base.get_image_in_folder(folder,base.get_image_base_type(),0));
-
-    stringstream values;
-
-    if( base.get_image_base_type() == image_base::TYPE::RSSCN)
-    {
-        if(base.color() == image_base::COLOR::RGB )
-        {
-            int from[] = {0,(image.cols-1),(image.cols-1 + image.cols*image.rows * 2),(image.cols*image.rows*2),
-                    0,(image.cols-1),image.cols/3,image.cols*(image.rows/2),
-                      image.cols*image.rows,(image.cols-1)+(image.cols*image.rows),(image.cols/2)+(image.cols*image.rows),image.cols*(image.rows/2)+(image.cols*image.rows),
-                      image.cols*image.rows*2,(image.cols-1)+(image.cols*image.rows*2),(image.cols/2)+(image.cols*image.rows*2),image.cols*(image.rows/2)+(image.cols*image.rows*2)};
-
-            igraph_vs_t to[16];
-
-            define_pixels_destino(to,image,base.color());
-
-
-            for(int i = 0; i < base.images(); i++)
-            {
-                string img_str  = base.get_image_in_folder(folder,base.get_image_base_type(),i);
-
-                string temp = atributeGenerator(img_str,to,from);
-                temp += "class_"+to_string(folder)+"\n";
-
-                values << temp;
-            }
-
-
-            for(int i = 0 ; i < 16; i++)
-              igraph_vs_destroy(&to[i]);
-        }
-        else
-        {
-            int from[] = {0,(image.cols-1),image.cols/2,image.cols*(image.rows/2)};
-            igraph_vs_t to[4];
-            define_pixels_destino(to,image,base.color());
-
-            for(int i = 0; i < base.images(); i++)
-            {
-                string img_str = base.get_image_in_folder(folder,base.get_image_base_type(),i);
-
-                string temp = atributeGenerator_gray(img_str,to,from);
-                temp += "class_"+to_string(folder)+"\n";
-
-
-            }
-
-            for(int i = 0 ; i < 4; i++)
-              igraph_vs_destroy(&to[i]);
-
-        }
-    }
-
-    mt.lock();
-    base.put_in_arff_file(values.str());
-    mt.unlock();
-
-}
 
 // mostra a imagem(img)
 void mostra_img(Mat img)
@@ -375,7 +312,6 @@ string atributeGenerator(string arg,T& to,X& from)
 
     //PIXELS DE PARTIDA
 
-    std::cerr << "CHEGOU\n";
     //CALCULA E IMPRIME MENOR CAMINHO
     for(int i = 0;i < 16;i++)
     {
@@ -464,5 +400,80 @@ string atributeGenerator_gray(string arg,T& to, X& from)
     igraph_destroy(&graph);
 
     return str_res;
+
+}
+
+std::mutex mt;
+// extrai valores de uma dada base de imagem
+void extrai_valor(int folder,image_base& base)
+{
+    Mat image = imread(base.get_image_in_folder(folder,base.get_image_base_type(),0));
+
+    stringstream values;
+
+    if(base.color() == image_base::COLOR::RGB )
+    {
+        int from[] = {0,(image.cols-1),(image.cols-1 + image.cols*image.rows * 2),(image.cols*image.rows*2),
+            0,(image.cols-1),image.cols/3,image.cols*(image.rows/2),
+              image.cols*image.rows,(image.cols-1)+(image.cols*image.rows),(image.cols/2)+(image.cols*image.rows),image.cols*(image.rows/2)+(image.cols*image.rows),
+              image.cols*image.rows*2,(image.cols-1)+(image.cols*image.rows*2),(image.cols/2)+(image.cols*image.rows*2),image.cols*(image.rows/2)+(image.cols*image.rows*2)};
+
+        igraph_vs_t to[16];
+
+        define_pixels_destino(to,image,base.color());
+
+
+        for(int i = 0; i < base.images(); i++)
+        {
+            string img_str  = base.get_image_in_folder(folder,base.get_image_base_type(),i);
+
+            string temp = atributeGenerator(img_str,to,from);
+            temp += "class_"+to_string(folder)+"\n";
+
+            values << temp;
+        }
+
+
+        for(int i = 0 ; i < 16; i++)
+          igraph_vs_destroy(&to[i]);
+    }
+    else
+    {
+        int from[] = {0,(image.cols-1),image.cols/2,image.cols*(image.rows/2)};
+        igraph_vs_t to[4];
+        define_pixels_destino(to,image,base.color());
+
+        for(int i = 0; i < base.images(); i++)
+        {
+            string img_str = base.get_image_in_folder(folder,base.get_image_base_type(),i);
+
+            string temp = atributeGenerator_gray(img_str,to,from);
+            temp += "class_"+to_string(folder)+"\n";
+
+            values << temp;
+        }
+
+        for(int i = 0 ; i < 4; i++)
+          igraph_vs_destroy(&to[i]);
+
+    }
+
+
+    mt.lock();
+    base.put_in_arff_file(values.str());
+    mt.unlock();
+
+}
+
+void thread_handler(image_base& base)
+{
+    std::vector<thread> threads;
+
+
+    for(int i = 1; i <= base.folders(); i++)
+        threads.emplace_back(extrai_valor,i,std::ref(base));
+
+    for(int i = 0; i < base.folders(); i++)
+        threads[i].join();
 
 }

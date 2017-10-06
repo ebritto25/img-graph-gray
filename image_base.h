@@ -16,8 +16,8 @@ public:
     enum class TYPE {BRODATZ,RSSCN};
     enum class COLOR {GRAY, RGB};
 
-    image_base(string codec,string path_folder,string path_to_image_, int folders, int images,TYPE type,COLOR scheme)
-    : image_codec{codec} , path_to_folders{path_folder},path_to_image{path_to_image_} ,number_of_folders{folders},number_of_images{images}, base_type{type}, color_scheme{scheme}
+    image_base(string codec,string path_folder, int folders, int images,TYPE type,COLOR scheme)
+    : image_codec{codec} , path_to_folders{path_folder},number_of_folders{folders},number_of_images{images}, base_type{type}, color_scheme{scheme}
     {
     }
 
@@ -48,14 +48,12 @@ public:
     void set_base_color(COLOR scheme);
     COLOR color() const ;
 
-    template<typename Folder>
-    string get_image_in_folder(Folder,TYPE,int);
+    string get_image_in_folder(int,TYPE,int);
 
 
 private:
     string image_codec;
     string path_to_folders;
-    string path_to_image;
     int number_of_folders;
     int number_of_images;
     ofstream arff_file;
