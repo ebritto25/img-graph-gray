@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
 
     // Caso especial base UCMERCED
         ifstream File;
-        File.open("../bases/UCMerced_LandUse/Images/folders_.txt");
+        File.open("/media/rodrigo/A96C-4A45/Kylberg/folders_name.txt");
         if(!File.is_open())
         {
             cerr << "Problema ao Abrir Nomes das Pastas" << '\n';
@@ -52,14 +52,14 @@ int main(int argc, char* argv[])
 
 
     DB(folders_name.size());
-    int number_folders = 20, number_images = 100;
+    int number_folders = 28, number_images = 160;
 
     string path = argv[1];
-    string image_codec = ".tif";
+    string image_codec = ".png";
 
 
     image_base base{image_codec,path,number_folders,number_images,
-                image_base::TYPE::UCM,image_base::COLOR::RGB};
+                image_base::TYPE::KYLBERG,image_base::COLOR::GRAY};
 
     if(!base.create_arff_file(argv[2]))
     {
