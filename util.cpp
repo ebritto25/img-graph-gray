@@ -463,6 +463,7 @@ void extrai_valor(int folder,image_base& base)
     mt.unlock();
 
 }
+
 void extrai_valor_str(string folder,image_base& base)
 {
     Mat image = imread(base.get_image_in_folder(folder,base.get_image_base_type(),0));
