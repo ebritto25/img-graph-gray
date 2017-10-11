@@ -433,6 +433,7 @@ void extrai_valor(int folder,image_base& base)
 
         for(int i = 0; i < base.images(); i++)
         {
+            std::cerr << "Thread: " << folder << " Imagem: " << i << " de " << base.images() << '\n';
             string img_str  = base.get_image_in_folder(folder,base.get_image_base_type(),i);
 
             string temp = atributeGenerator(img_str,base);
@@ -447,6 +448,7 @@ void extrai_valor(int folder,image_base& base)
 
         for(int i = 0; i < base.images(); i++)
         {
+            std::cerr << "Thread: " << folder << " Imagem: " << i << " de " << base.images() << '\n';
             string img_str = base.get_image_in_folder(folder,base.get_image_base_type(),i);
 
             string temp = atributeGenerator_gray(img_str,base);
@@ -476,6 +478,7 @@ void extrai_valor_str(string folder,image_base& base)
 
         for(int i = 0; i < base.images(); i++)
         {
+            std::cerr << "Thread: " << folder << " Imagem: " << i << " de " << base.images() << '\n';
             string img_str  = base.get_image_in_folder(folder,base.get_image_base_type(),i);
 
             string temp = atributeGenerator(img_str,base);
@@ -492,6 +495,7 @@ void extrai_valor_str(string folder,image_base& base)
 
         for(int i = 0; i < base.images(); i++)
         {
+            std::cerr << "Thread: " << folder << " Imagem: " << i << " de " << base.images() << '\n';
             string img_str = base.get_image_in_folder(folder,base.get_image_base_type(),i);
 
             string temp = atributeGenerator_gray(img_str,base);
@@ -530,6 +534,7 @@ void thread_handler(image_base& base,std::vector<string> folders)
 
     for(int i = 0; i < base.folders(); i++)
         threads.emplace_back(extrai_valor_str,folders[i],std::ref(base));
+
 
     for(int i = 0; i < base.folders(); i++)
         threads[i].join();
