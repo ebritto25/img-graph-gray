@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
 
     // Caso especial base UCMERCED
         ifstream File;
-        File.open("../UCMerced_LandUse/Images/folders_.txt");
+        File.open("../bases/UCMerced_LandUse/Images/folders_.txt");
         if(!File.is_open())
         {
             cerr << "Problema ao Abrir Nomes das Pastas" << '\n';
@@ -49,9 +49,6 @@ int main(int argc, char* argv[])
      //
 
 
-
-    for(auto folder : folders_name)
-        DB(folder);
 
 
     DB(folders_name.size());

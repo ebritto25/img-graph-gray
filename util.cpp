@@ -1,6 +1,7 @@
 #include <opencv2/opencv.hpp>
 #include "image_base.h"
 #include <mutex>
+#include <array>
 #include <iostream>
 #include <functional>
 #include <thread>
@@ -51,7 +52,7 @@ void mostra_img(Mat img)
 string gera_vector_arff(igraph_vector_t *v)
 {
 
-  long int i, l=igraph_vector_size(v);
+  long int i, l = igraph_vector_size(v);
 
   string res {""};
 
@@ -70,9 +71,9 @@ igraph_t createGraph(Mat &imagem)
     igraph_integer_t n = imagem.rows * imagem.cols * imagem.channels();
     igraph_empty(&graph,n,IGRAPH_UNDIRECTED);
 
-
     cout << "Criado grafo "<< igraph_vcount(&graph) << " nós\n";
     cout << "Imagem: "<< imagem.cols << 'x' << imagem.rows << '\n';
+
     return graph;
 }
 
@@ -268,7 +269,8 @@ void avgVector(igraph_vector_t *edges,igraph_vector_t *weights, igraph_vector_t 
 
     for(int i = 0;i < size;i++)
     {
-        des += pow(((igraph_real_t)VECTOR(*weights)[(int)VECTOR(*edges)[i]])-sum,2);
+        igraph_real_t temp = ((igraph_real_t)VECTOR(*weights)[(int)VECTOR(*edges)[i]])-sum ;
+        des += temp * temp; // Melhor que usar Pow
     }
 
     des /= size;
@@ -284,7 +286,6 @@ string atributeGenerator(string arg,image_base& base)
 
     igraph_vector_ptr_t vPath,ePath;
 
-    std::cerr << arg << '\n';
 
 
     igraph_vs_t to[16];
@@ -400,7 +401,7 @@ string atributeGenerator_gray(string arg,image_base& base)
 
     string str_res = gera_vector_arff(&res);
 
-    cout << '\n';
+    //cout << '\n';
 
 
 
@@ -432,6 +433,7 @@ void extrai_valor(int folder,image_base& base)
 
         for(int i = 0; i < base.images(); i++)
         {
+            std::cerr << "Thread: " << folder << "\nImagem: " << i << " de " << base.images() << '\n';
             string img_str  = base.get_image_in_folder(folder,base.get_image_base_type(),i);
 
             string temp = atributeGenerator(img_str,base);
@@ -446,6 +448,7 @@ void extrai_valor(int folder,image_base& base)
 
         for(int i = 0; i < base.images(); i++)
         {
+            std::cerr << "Thread: " << folder << "\nImagem: " << i << " de " << base.images() << '\n';
             string img_str = base.get_image_in_folder(folder,base.get_image_base_type(),i);
 
             string temp = atributeGenerator_gray(img_str,base);
@@ -476,6 +479,7 @@ void extrai_valor_str(string folder,image_base& base)
 
         for(int i = 0; i < base.images(); i++)
         {
+            std::cerr << "Thread: " << folder << "\nImagem: " << i << " de " << base.images() << '\n';
             string img_str  = base.get_image_in_folder(folder,base.get_image_base_type(),i);
 
             string temp = atributeGenerator(img_str,base);
@@ -492,6 +496,7 @@ void extrai_valor_str(string folder,image_base& base)
 
         for(int i = 0; i < base.images(); i++)
         {
+            std::cerr << "Thread: " << folder << "\nImagem: " << i << " de " << base.images() << '\n';
             string img_str = base.get_image_in_folder(folder,base.get_image_base_type(),i);
 
             string temp = atributeGenerator_gray(img_str,base);
@@ -513,12 +518,10 @@ void thread_handler(image_base& base)
 {
     std::vector<thread> threads;
 
+    threads.reserve(base.folders());
 
     for(int i = 1; i <= base.folders(); i++)
-    {
-        std::cout << "Thread " << i <<'\n';
         threads.emplace_back(extrai_valor,i,std::ref(base));
-    }
 
     for(int i = 0; i < base.folders(); i++)
         threads[i].join();
@@ -528,13 +531,11 @@ void thread_handler(image_base& base,std::vector<string> folders)
 {
     std::vector<thread> threads;
 
+    threads.reserve(base.folders());
 
     for(int i = 0; i < base.folders(); i++)
-    {
-        std::cout << "Thread " << i << " " << folders[i] <<'\n';
         threads.emplace_back(extrai_valor_str,folders[i],std::ref(base));
 
-    }
 
     for(int i = 0; i < base.folders(); i++)
         threads[i].join();
