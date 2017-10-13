@@ -4,37 +4,18 @@
 #include "util.cpp"
 
 
-/*
-      default:
-        for(int j = 1;j <= 10;j++)
-        {
-                int mult = (j-1)*100;
-                for(int i = mult+0;i < mult+100;i++)
-                {
-                    std::cout << "Imagem:  " << i+1<< " de 1000.\n";
-
-                    if(!imagem_colorida)
-                        str_out = atributeGenerator_gray(path+"/"+path_folder+to_string(j)+"/"+to_string(i)+image_codec)+path_folder+to_string(j)+"\n";
-                    else
-
-                        //str_out = atributeGenerator(path+"/"+path_folder+to_string(j)+"/"+to_string(i)+image_codec)+path_folder+to_string(j)+"\n";
-
-                    cerr << "ARFF OUTPUT: " << str_out << '\n';
-                    File << str_out;
-                }
-        }
-        break;
-    }
-}
-*/
 
 int main(int argc, char* argv[])
 {
+
     if(argc < 2)
+    {
+        std::cerr << "Quantidade de argumentos inválida!\n";
         exit(-1);
+    }
 
 
-    // Caso especial base UCMERCED
+    // Caso especial bases com nomes nas pastas
         ifstream File;
         File.open("/media/rodrigo/A96C-4A45/Kylberg/folders_name.txt");
         if(!File.is_open())
