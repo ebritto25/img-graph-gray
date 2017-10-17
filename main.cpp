@@ -17,7 +17,7 @@ int main(int argc, char* argv[])
 
     // Caso especial bases com nomes nas pastas
         ifstream File;
-        File.open("/media/rodrigo/A96C-4A45/Kylberg/folders_name.txt");
+        File.open("../bases/Kylberg/folders_name.txt");
         if(!File.is_open())
         {
             cerr << "Problema ao Abrir Nomes das Pastas" << '\n';
