@@ -164,7 +164,7 @@ int EWVector_gray(Mat & img,igraph_vector_t *edges,igraph_vector_t *weight)
             else
             {
                 if((i == (img.rows - 1)) && (j == (img.cols - 1)))//ULTIMO PIXEL, NÃO FAZ NADA
-                    continue;
+                    break; // testando com break
 
                 if(i == (img.rows - 1))//PIXEL NA BORDA INFERIOR, LIGA SÓ A DIREITA
                 {
@@ -226,7 +226,7 @@ int EWVector(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
                 else
                 {
                     if((i == (img.rows - 1)) && (j == (img.cols - 1)))//ULTIMO PIXEL, NÃO FAZ NADA
-                        continue;
+                        break; // testando com break
 
                     if(i == (img.rows - 1))//PIXEL NA BORDA INFERIOR, LIGA SÓ A DIREITA
                     {
@@ -514,6 +514,7 @@ void extrai_valor_str(string folder,image_base& base)
     mt.unlock();
 
 }
+
 void thread_handler(image_base& base)
 {
     std::vector<thread> threads;
@@ -527,6 +528,7 @@ void thread_handler(image_base& base)
         threads[i].join();
 
 }
+
 void thread_handler(image_base& base,std::vector<string> folders)
 {
     std::vector<thread> threads;
