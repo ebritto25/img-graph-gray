@@ -202,6 +202,7 @@ int EWVector(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
                 if(camada < 2)
                 {
                     intensity1 = img.at<Vec3b>(i,j);
+                    VECTOR(*edges)[cont++] = pixel;
                     VECTOR(*edges)[cont++] = pixel+(img.cols*img.rows);
                     intensity2 = intensity1;
                     VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada+1]));
