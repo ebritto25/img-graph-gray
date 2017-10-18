@@ -190,22 +190,24 @@ int EWVector_gray(Mat & img,igraph_vector_t *edges,igraph_vector_t *weight)
 // dada uma imagem (img)
 int EWVector(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
 {
-    int cont = 0,pixel = 0,wcont = 0;
+    int cont = 0,pixel = 0,wcont = 0, dimension = img.cols*img.rows;
     Vec3b intensity1,intensity2;
 
-    for(int camada = 0; camada < 3;camada++)
-    {
         for(int i = 0;i < img.rows;i++)
         {
             for(int j = 0;j < img.cols;j++,pixel++)
             {
+                /*
                 if(camada < 2)
                 {
                     intensity1 = img.at<Vec3b>(i,j);
                     VECTOR(*edges)[cont++] = pixel+(img.cols*img.rows);
                     intensity2 = intensity1;
                     VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada+1]));
-                }
+                }*/
+
+
+
                 if((i < img.rows - 1) && (j < img.cols - 1))//PIXEL NÃO É BORDA, LIGA A DIREITA E ABAIXO
                 {
 
@@ -245,9 +247,20 @@ int EWVector(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
                         VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada]));
                     }
                 }
+
+                //CAMADA 1-2
+                VECTOR(*edges)[cont++] = pixel;
+                VECTOR(*edges)[cont++] = pixel + dimension;
+                intensity1 = img.at<Vec3b>(i,j);
+                intensity2 = intensity1;
+                VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[0] - intensity2.val[1]));
+                //CAMADA 2-3
+                VECTOR(*edges)[cont++] = pixel + dimension;
+                VECTOR(*edges)[cont++] = pixel + (dimension*2);
+                VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[1] - intensity2.val[2]));
+
             }
         }
-    }
     return 1;
 }
 
