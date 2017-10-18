@@ -26,14 +26,15 @@ int main(int argc, char* argv[])
         std::vector<string> folders_name;
         std::istream_iterator<string> eos;
         std::istream_iterator<string> input(File);
-        std::copy(input,eos,std::back_inserter(folders_name));
+        std::copy_if(input,eos,std::back_inserter(folders_name),[](std::string a) { return a[0] != '#'; });
      //
 
 
 
 
     DB(folders_name.size());
-    int number_folders = 28, number_images = 160;
+    // temporario
+    int number_folders = folders_name.size(), number_images = 160;
 
     string path = argv[1];
     string image_codec = ".png";
