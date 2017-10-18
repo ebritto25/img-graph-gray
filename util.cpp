@@ -164,7 +164,7 @@ int EWVector_gray(Mat & img,igraph_vector_t *edges,igraph_vector_t *weight)
             else
             {
                 if((i == (img.rows - 1)) && (j == (img.cols - 1)))//ULTIMO PIXEL, NÃO FAZ NADA
-                    break; // testando com break
+                    continue;
 
                 if(i == (img.rows - 1))//PIXEL NA BORDA INFERIOR, LIGA SÓ A DIREITA
                 {
@@ -227,7 +227,7 @@ int EWVector(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
                 else
                 {
                     if((i == (img.rows - 1)) && (j == (img.cols - 1)))//ULTIMO PIXEL, NÃO FAZ NADA
-                        break; // testando com break
+                       continue;
 
                     if(i == (img.rows - 1))//PIXEL NA BORDA INFERIOR, LIGA SÓ A DIREITA
                     {
