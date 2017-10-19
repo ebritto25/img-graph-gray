@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
 
 
     DB(folders_name.size());
-    // temporario
+
     int number_folders = folders_name.size(), number_images = 160;
 
     string path = argv[1];
