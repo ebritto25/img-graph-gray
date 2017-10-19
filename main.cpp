@@ -17,7 +17,7 @@ int main(int argc, char* argv[])
 
     // Caso especial bases com nomes nas pastas
         ifstream File;
-        File.open("../bases/Kylberg/folders_name.txt");
+        File.open("../home/rodrigo/ic/bases/UCMerced_LandUse/Images/folders_name.txt");
         if(!File.is_open())
         {
             cerr << "Problema ao Abrir Nomes das Pastas" << '\n';
@@ -37,11 +37,11 @@ int main(int argc, char* argv[])
     int number_folders = folders_name.size(), number_images = 160;
 
     string path = argv[1];
-    string image_codec = ".png";
+    string image_codec = ".tif";
 
 
     image_base base{image_codec,path,number_folders,number_images,
-                image_base::TYPE::KYLBERG,image_base::COLOR::GRAY};
+                image_base::TYPE::UCM,image_base::COLOR::RGB};
 
     if(!base.create_arff_file(argv[2]))
     {
