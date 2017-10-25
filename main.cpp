@@ -16,7 +16,11 @@ int main(int argc, char* argv[])
 
 
     string path = argv[1];
-    std::cerr << path << '\n';
+
+    // Pra lembrar de configurar os argumentos
+    std::cout << "Caminho para Base que será utilizada:\n\t" << path << "\nNome do arquivo ARFF:\n\t"<< argv[2] << '\n';
+    std::cout << "Continuar?\n";
+    std::cin.get();
 
     // Caso especial bases com nomes nas pastas
         ifstream File;
@@ -37,15 +41,15 @@ int main(int argc, char* argv[])
 
     DB(folders_name.size());
     // temporario
-    int number_folders = folders_name.size(), number_images = 100;
+    int number_folders = folders_name.size(), number_images = 40;
 
 
 
-    string image_codec = ".tif";
+    string image_codec = ".png";
 
 
     image_base base{image_codec,path,number_folders,number_images,
-                image_base::TYPE::UCM,image_base::COLOR::RGB};
+                image_base::TYPE::KYLBERG ,image_base::COLOR::GRAY};
 
     if(!base.create_arff_file(argv[2]))
     {
@@ -53,6 +57,6 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-    thread_handler(base,folders_name);
+    thread_handler(base,folders_name,true);
 
 }

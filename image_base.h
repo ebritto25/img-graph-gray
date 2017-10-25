@@ -13,7 +13,7 @@ using namespace std;
 class image_base
 {
 public:
-    enum class TYPE {BRODATZ,RSSCN,UCM,KYLBERG};
+    enum class TYPE {BRODATZ,RGBBRODATZ,RSSCN,UCM,KYLBERG};
     enum class COLOR {GRAY, RGB};
 
     image_base(string codec,string path_folder, int folders, int images,TYPE type,COLOR scheme)

@@ -281,7 +281,7 @@ void avgVector(igraph_vector_t *edges,igraph_vector_t *weights, igraph_vector_t 
 }
 
 //gera o arquivo arff de uma determinada imagem colorida
-string atributeGenerator(string arg,image_base& base)
+string atributeGenerator(string arg,image_base& base,bool with_mst)
 {
     igraph_t graph;
 
@@ -330,8 +330,13 @@ string atributeGenerator(string arg,image_base& base)
         avgVector((igraph_vector_t*)VECTOR(ePath)[0],&vWeights,&res);
     }
 
-    igraph_minimum_spanning_tree(&graph,&edges_mst,&vWeights);
-    avgVector(&edges_mst,&vWeights,&res);
+    if(with_mst)
+    {
+        igraph_minimum_spanning_tree(&graph,&edges_mst,&vWeights);
+
+        avgVector(&edges_mst,&vWeights,&res);
+    }
+
     string str_res = gera_vector_arff(&res);
     cout << '\n';
 
@@ -351,7 +356,7 @@ string atributeGenerator(string arg,image_base& base)
 
 //gera o arquivo arff de uma determinada imagem
 // em tons de cinza
-string atributeGenerator_gray(string arg,image_base& base)
+string atributeGenerator_gray(string arg,image_base& base,bool with_mst)
 {
 
     igraph_t graph;
@@ -396,13 +401,15 @@ string atributeGenerator_gray(string arg,image_base& base)
         avgVector((igraph_vector_t*)VECTOR(ePath)[0],&vWeights,&res);
     }
 
-    igraph_minimum_spanning_tree(&graph,&edges_mst,&vWeights);
+    if(with_mst)
+    {
+        igraph_minimum_spanning_tree(&graph,&edges_mst,&vWeights);
 
-    avgVector(&edges_mst,&vWeights,&res);
+        avgVector(&edges_mst,&vWeights,&res);
+    }
 
     string str_res = gera_vector_arff(&res);
 
-    //cout << '\n';
 
 
 
@@ -422,7 +429,7 @@ string atributeGenerator_gray(string arg,image_base& base)
 
 std::mutex mt;
 // extrai valores de uma dada base de imagem
-void extrai_valor(int folder,image_base& base)
+void extrai_valor(int folder,image_base& base,bool with_mst)
 {
     Mat image = imread(base.get_image_in_folder(folder,base.get_image_base_type(),0));
 
@@ -437,7 +444,7 @@ void extrai_valor(int folder,image_base& base)
             std::cerr << "Thread: " << folder << "\nImagem: " << i << " de " << base.images() << '\n';
             string img_str  = base.get_image_in_folder(folder,base.get_image_base_type(),i);
 
-            string temp = atributeGenerator(img_str,base);
+            string temp = atributeGenerator(img_str,base,with_mst);
             temp += "class_"+to_string(folder)+"\n";
 
             values << temp;
@@ -452,7 +459,7 @@ void extrai_valor(int folder,image_base& base)
             std::cerr << "Thread: " << folder << "\nImagem: " << i << " de " << base.images() << '\n';
             string img_str = base.get_image_in_folder(folder,base.get_image_base_type(),i);
 
-            string temp = atributeGenerator_gray(img_str,base);
+            string temp = atributeGenerator_gray(img_str,base,with_mst);
             temp += "class_"+to_string(folder)+"\n";
 
             values << temp;
@@ -468,7 +475,7 @@ void extrai_valor(int folder,image_base& base)
 
 }
 
-void extrai_valor_str(string folder,image_base& base)
+void extrai_valor_str(string folder,image_base& base,bool with_mst)
 {
     Mat image = imread(base.get_image_in_folder(folder,base.get_image_base_type(),0));
 
@@ -483,7 +490,7 @@ void extrai_valor_str(string folder,image_base& base)
             std::cerr << "Thread: " << folder << "\nImagem: " << i << " de " << base.images() << '\n';
             string img_str  = base.get_image_in_folder(folder,base.get_image_base_type(),i);
 
-            string temp = atributeGenerator(img_str,base);
+            string temp = atributeGenerator(img_str,base,with_mst);
             temp += "class_"+folder+"\n";
 
             values << temp;
@@ -500,7 +507,7 @@ void extrai_valor_str(string folder,image_base& base)
             std::cerr << "Thread: " << folder << "\nImagem: " << i << " de " << base.images() << '\n';
             string img_str = base.get_image_in_folder(folder,base.get_image_base_type(),i);
 
-            string temp = atributeGenerator_gray(img_str,base);
+            string temp = atributeGenerator_gray(img_str,base,with_mst);
             temp += "class_"+folder+"\n";
 
             values << temp;
@@ -516,28 +523,28 @@ void extrai_valor_str(string folder,image_base& base)
 
 }
 
-void thread_handler(image_base& base)
+void thread_handler(image_base& base,bool with_mst)
 {
     std::vector<thread> threads;
 
     threads.reserve(base.folders());
 
     for(int i = 1; i <= base.folders(); i++)
-        threads.emplace_back(extrai_valor,i,std::ref(base));
+        threads.emplace_back(extrai_valor,i,std::ref(base),with_mst);
 
     for(int i = 0; i < base.folders(); i++)
         threads[i].join();
 
 }
 
-void thread_handler(image_base& base,std::vector<string> folders)
+void thread_handler(image_base& base,std::vector<string> folders,bool with_mst)
 {
     std::vector<thread> threads;
 
     threads.reserve(base.folders());
 
     for(int i = 0; i < base.folders(); i++)
-        threads.emplace_back(extrai_valor_str,folders[i],std::ref(base));
+        threads.emplace_back(extrai_valor_str,folders[i],std::ref(base),with_mst);
 
 
     for(int i = 0; i < base.folders(); i++)
