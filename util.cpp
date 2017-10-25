@@ -173,7 +173,7 @@ int EWVector_gray(Mat & img,igraph_vector_t *edges,igraph_vector_t *weight)
                     VECTOR(*weight)[wcont++] = abs(((int)img.at<uchar>(i,j) - (int)img.at<uchar>(i,j + 1)));
                     cont += 2;
                 }
-                if(j == (img.cols - 1))//PIXEL NA BORDA DIREITA, LIGA SÓ ABAIXO
+                else if(j == (img.cols - 1))//PIXEL NA BORDA DIREITA, LIGA SÓ ABAIXO
                 {
                     VECTOR(*edges)[cont] = pixel;
                     VECTOR(*edges)[cont+1] = pixel+(img.cols);
@@ -237,7 +237,7 @@ int EWVector(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
                         intensity2 = img.at<Vec3b>(i,j + 1);
                         VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada]));
                     }
-                    if(j == (img.cols - 1))//PIXEL NA BORDA DIREITA, LIGA SÓ ABAIXO
+                    else if(j == (img.cols - 1))//PIXEL NA BORDA DIREITA, LIGA SÓ ABAIXO
                     {
                         VECTOR(*edges)[cont++] = pixel;
                         VECTOR(*edges)[cont++] = pixel+(img.cols);
