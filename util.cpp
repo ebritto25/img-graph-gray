@@ -164,7 +164,7 @@ int EWVector_gray(Mat & img,igraph_vector_t *edges,igraph_vector_t *weight)
             else
             {
                 if((i == (img.rows - 1)) && (j == (img.cols - 1)))//ULTIMO PIXEL, NÃO FAZ NADA
-                    break; // testando com break
+                    continue;
 
                 if(i == (img.rows - 1))//PIXEL NA BORDA INFERIOR, LIGA SÓ A DIREITA
                 {
@@ -210,41 +210,49 @@ int EWVector(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
 
                 if((i < img.rows - 1) && (j < img.cols - 1))//PIXEL NÃO É BORDA, LIGA A DIREITA E ABAIXO
                 {
-
-                    //LIGA COM O VERTICE DA DIREITA E CALCULA O PESO
-                    VECTOR(*edges)[cont++] = pixel;
-                    VECTOR(*edges)[cont++] = pixel+1;
-                    intensity1 = img.at<Vec3b>(i,j);
-                    intensity2 = img.at<Vec3b>(i,j + 1);
-                    VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada]));
-                    //LIGA COM O VERTICE DE BAIXO E CALCULA O PESO
-                    VECTOR(*edges)[cont++] = pixel;
-                    VECTOR(*edges)[cont++] = pixel+(img.cols);
-                    intensity2 = img.at<Vec3b>(i+1,j);
-                    VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada]));
-                    //AVANÇA O CONTADOR DO VETOR 2 PARES A FRENTE
-
+                    for(int k = 0;k < 3;k++)
+                    {
+                        //PRIMEIRA CAMADA
+                        //LIGA COM O VERTICE DA DIREITA E CALCULA O PESO
+                        VECTOR(*edges)[cont++] = pixel+(dimension*k);
+                        VECTOR(*edges)[cont++] = (pixel+(dimension*k))+1;
+                        intensity1 = img.at<Vec3b>(i,j);
+                        intensity2 = img.at<Vec3b>(i,j + 1);
+                        VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[k] - intensity2.val[k]));
+                        //LIGA COM O VERTICE DE BAIXO E CALCULA O PESO
+                        VECTOR(*edges)[cont++] = pixel+(dimension*k);
+                        VECTOR(*edges)[cont++] = (pixel+(dimension*k))+(img.cols);
+                        intensity2 = img.at<Vec3b>(i+1,j);
+                        VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[k] - intensity2.val[k]));
+                        //AVANÇA O CONTADOR DO VETOR 2 PARES A FRENTE
+                    }
                 }
                 else
                 {
                     if((i == (img.rows - 1)) && (j == (img.cols - 1)))//ULTIMO PIXEL, NÃO FAZ NADA
-                        break; // testando com break
+                        continue;
 
                     if(i == (img.rows - 1))//PIXEL NA BORDA INFERIOR, LIGA SÓ A DIREITA
                     {
-                        VECTOR(*edges)[cont++] = pixel;
-                        VECTOR(*edges)[cont++] = pixel+1;
-                        intensity1 = img.at<Vec3b>(i,j);
-                        intensity2 = img.at<Vec3b>(i,j + 1);
-                        VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada]));
+                        for(int k = 0;k < 3;k++)
+                        {
+                            VECTOR(*edges)[cont++] = pixel+(dimension*k);
+                            VECTOR(*edges)[cont++] = (pixel+(dimension*k))+1;
+                            intensity1 = img.at<Vec3b>(i,j);
+                            intensity2 = img.at<Vec3b>(i,j + 1);
+                            VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[k] - intensity2.val[k]));
+                        }
                     }
                     if(j == (img.cols - 1))//PIXEL NA BORDA DIREITA, LIGA SÓ ABAIXO
                     {
-                        VECTOR(*edges)[cont++] = pixel;
-                        VECTOR(*edges)[cont++] = pixel+(img.cols);
-                        intensity1 = img.at<Vec3b>(i,j);
-                        intensity2 = img.at<Vec3b>(i+1,j);
-                        VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada]));
+                        for(int k = 0;k < 3;k++)
+                        {
+                            VECTOR(*edges)[cont++] = pixel+(dimension*k);
+                            VECTOR(*edges)[cont++] = (pixel+(dimension*k))+(img.cols);
+                            intensity1 = img.at<Vec3b>(i,j);
+                            intensity2 = img.at<Vec3b>(i+1,j);
+                            VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[k] - intensity2.val[k]));
+                        }
                     }
                 }
 
