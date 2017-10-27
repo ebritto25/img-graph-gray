@@ -83,6 +83,7 @@ igraph_t createGraph(Mat &imagem)
 template <typename T>
 void define_pixels_destino(T& to,Mat& image,image_base::COLOR color)
 {
+
     if(color == image_base::COLOR::GRAY)
     {
         const int ultimo_pixel_1  = (image.cols*image.rows) -1;

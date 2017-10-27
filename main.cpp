@@ -41,15 +41,15 @@ int main(int argc, char* argv[])
 
     DB(folders_name.size());
     // temporario
-    int number_folders = folders_name.size(), number_images = 40;
+    int number_folders = folders_name.size(), number_images = 400;
 
 
 
-    string image_codec = ".png";
+    string image_codec = ".tif";
 
 
     image_base base{image_codec,path,number_folders,number_images,
-                image_base::TYPE::KYLBERG ,image_base::COLOR::GRAY};
+                image_base::TYPE::RGBBRODATZ,image_base::COLOR::RGB};
 
     if(!base.create_arff_file(argv[2]))
     {
