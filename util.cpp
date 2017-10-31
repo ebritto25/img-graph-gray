@@ -5,12 +5,37 @@
 #include <iostream>
 #include <functional>
 #include <thread>
+#include <map> // multimap
 #include "vectorgraph.hpp"
 
 #define DB(X) std::cerr << #X << '=' << X << '\n';
 
 using namespace cv;
 using namespace std;
+
+
+multimap<int,int> gerar_conexao_todos_todos(Mat& imagem)
+{
+	multimap<int,int> conexoes;	
+	
+	/*  
+		Função  vai gerar uma conexão de todos os nós com todos os outros
+			-Vai verificar se já teve conexão entre os nós atuais
+				-Realiza a conexão caso não haja
+	*/
+
+
+	
+	
+	
+
+	
+	
+
+	return conexoes;
+}
+
+
 
 // gera uma matriz de adjacência a partir de uma dada imagem(image)
 void gera_mat_adj(igraph_matrix_t* mat_adj,Mat& image,igraph_vector_t* weights)
@@ -137,6 +162,9 @@ void define_pixels_destino(T& to,Mat& image,image_base::COLOR color)
     }
 
 }
+
+
+
 
 // gera um vetor de edges e de weight
 // dada uma imagem (img) em tons de cinza
