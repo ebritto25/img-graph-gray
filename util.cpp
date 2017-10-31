@@ -258,7 +258,7 @@ int EWVector(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
 void avgVector(igraph_vector_t *edges,igraph_vector_t *weights, igraph_vector_t *res)
 {
     igraph_real_t sum,des;
-    int size = igraph_vector_size(edges);
+    const int size = igraph_vector_size(edges);
 
     for(int i = 0;i < size;i++)
     {
@@ -293,7 +293,7 @@ string atributeGenerator(string arg,image_base& base,bool with_mst)
     igraph_vs_t to[16];
 
     Mat image = imread(arg);
-    int from[] = {0,(image.cols-1),(image.cols-1 + image.cols*image.rows * 2),(image.cols*image.rows*2),
+    const int from[] = {0,(image.cols-1),(image.cols-1 + image.cols*image.rows * 2),(image.cols*image.rows*2),
         0,(image.cols-1),image.cols/3,image.cols*(image.rows/2),
           image.cols*image.rows,(image.cols-1)+(image.cols*image.rows),(image.cols/2)+(image.cols*image.rows),image.cols*(image.rows/2)+(image.cols*image.rows),
           image.cols*image.rows*2,(image.cols-1)+(image.cols*image.rows*2),(image.cols/2)+(image.cols*image.rows*2),image.cols*(image.rows/2)+(image.cols*image.rows*2)};
@@ -365,7 +365,7 @@ string atributeGenerator_gray(string arg,image_base& base,bool with_mst)
 
     Mat image = imread(arg);
 
-    int from[] = {0,(image.cols-1),image.cols/2,image.cols*(image.rows/2)};
+    const int from[] = {0,(image.cols-1),image.cols/2,image.cols*(image.rows/2)};
     igraph_vs_t to[4];
 
     define_pixels_destino(to,image,base.color());
