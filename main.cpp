@@ -57,6 +57,6 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-    thread_handler(base,folders_name,true);
+    thread_handler(base,folders_name,false);
 
 }
