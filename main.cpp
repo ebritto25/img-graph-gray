@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
 
     DB(folders_name.size());
     // temporario
-    int number_folders = folders_name.size(), number_images = 400;
+    int number_folders = folders_name.size(), number_images = 100;
 
 
 
@@ -49,7 +49,8 @@ int main(int argc, char* argv[])
 
 
     image_base base{image_codec,path,number_folders,number_images,
-                image_base::TYPE::RGBBRODATZ,image_base::COLOR::RGB};
+                image_base::TYPE::UCM,image_base::COLOR::RGB};
+
 
     if(!base.create_arff_file(argv[2]))
     {
@@ -57,6 +58,6 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-    thread_handler(base,folders_name,false);
+    thread_handler(base,folders_name,true);
 
 }
