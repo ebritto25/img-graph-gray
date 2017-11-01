@@ -16,15 +16,22 @@ using namespace std;
 
 multimap<int,int> gerar_conexao_todos_todos(Mat& imagem)
 {
-	multimap<int,int> conexoes;	
+    multimap<int,int> conexao;
 	
 	/*  
 		Função  vai gerar uma conexão de todos os nós com todos os outros
 			-Vai verificar se já teve conexão entre os nós atuais
 				-Realiza a conexão caso não haja
 	*/
+    for(int i = 0; i < imagem.rows; i++)
+    {
+        for(int j = 0; j < imagem.cols; j++)
+        {
 
 
+        }
+
+    }
 	
 	
 	
