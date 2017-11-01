@@ -1,3 +1,4 @@
+
 import tensorflow as tf
 import numpy as np
 import time
@@ -13,12 +14,12 @@ print("- Validation-set:\t{}".format(len(data.validation.labels)))
 
 
 # Placeholder variable for the input images
-x = tf.placeholder(tf.float32, shape=[None, 32*32], name='X')
+x = tf.placeholder(tf.float32, shape=[None, 28*28], name='X')
 # Reshape it into [num_images, img_height, img_width, num_channels]
-x_image = tf.reshape(x, [-1, 32, 32, 1])
+x_image = tf.reshape(x, [-1, 28, 28, 1])
 
 # Placeholder variable for the true labels associated with the images
-y_true = tf.placeholder(tf.float32, shape=[None, 13], name='y_true')
+y_true = tf.placeholder(tf.float32, shape=[None, 10], name='y_true')
 y_true_cls = tf.argmax(y_true, dimension=1)
 
 
@@ -109,7 +110,7 @@ layer_fc1 = new_fc_layer(layer_flat, num_inputs=num_features, num_outputs=128, n
 layer_relu3 = new_relu_layer(layer_fc1, name="relu3")
 
 # Fully-Connected Layer 2
-layer_fc2 = new_fc_layer(input=layer_relu3, num_inputs=128, num_outputs=13, name="fc2")
+layer_fc2 = new_fc_layer(input=layer_relu3, num_inputs=128, num_outputs=10, name="fc2")
 
 
 # Use Softmax function to normalize the output
@@ -147,19 +148,6 @@ merged_summary = tf.summary.merge_all()
 
 num_epochs = 100
 batch_size = 100
-path = "/home/eduardo/ProjQt/textures/class_1"
-num_Classes = 13
-num_Img = 100
-
-def loadimages(path,n_Classes,n_Img):
-	image = []
-	label = []
-	for i in range(1,n_Classes+1):
-		for j in range(n_Img):
-			image.append(cv2.imread(path+"/"+str(i)+"/"+"output"+str(i)+"_"+str(j)+".tiff"))
-			label.append("class_"+str(i))
-			
-	return image[:], label[:]
 
 
 with tf.Session() as sess:
@@ -175,27 +163,30 @@ with tf.Session() as sess:
         start_time = time.time()
         train_accuracy = 0
         
-        for j in range(1, num_Classes+1):
-		    
-	    for i in range(num_Img):
-		    # Get a batch of images and labels
-		    x_batch, y_true_batch = loadimages(path,num_Classes,num_Img)
-		    
-		    # Put the batch into a dict with the proper names for placeholder variables
-		    feed_dict_train = {x: x_batch, y_true: y_true_batch}
-		    
-		    # Run the optimizer using this batch of training data.
-		    sess.run(optimizer, feed_dict=feed_dict_train)
-		    
-		    # Calculate the accuracy on the batch of training data
-		    train_accuracy += sess.run(accuracy, feed_dict=feed_dict_train)
-		    
-		    # Generate summary with the current batch of data and write to file
-		    summ = sess.run(merged_summary, feed_dict=feed_dict_train)
-		    writer.add_summary(summ, epoch*(num_Classes*num_Img) + batch)
-		
+        for batch in range(0, int(len(data.train.labels)/batch_size)):
+            
+            # Get a batch of images and labels
+            x_batch, y_true_batch = data.train.next_batch(batch_size)
+            
+            # Put the batch into a dict with the proper names for placeholder variables
+            feed_dict_train = {x: x_batch, y_true: y_true_batch}
+            
+            # Run the optimizer using this batch of training data.
+            sess.run(optimizer, feed_dict=feed_dict_train)
+            
+            # Calculate the accuracy on the batch of training data
+            train_accuracy += sess.run(accuracy, feed_dict=feed_dict_train)
+            
+            # Generate summary with the current batch of data and write to file
+            summ = sess.run(merged_summary, feed_dict=feed_dict_train)
+            writer.add_summary(summ, epoch*int(len(data.train.labels)/batch_size) + batch)
+        
           
-        train_accuracy /= (num_Classes*num_Img)
+        train_accuracy /= int(len(data.train.labels)/batch_size)
+        
+        # Generate summary and validate the model on the entire validation set
+        summ, vali_accuracy = sess.run([merged_summary, accuracy], feed_dict={x:data.validation.images, y_true:data.validation.labels})
+        writer1.add_summary(summ, epoch)
         
 
         end_time = time.time()
@@ -203,3 +194,4 @@ with tf.Session() as sess:
         print("Epoch "+str(epoch+1)+" completed : Time usage "+str(int(end_time-start_time))+" seconds")
         print("\tAccuracy:")
         print ("\t- Training Accuracy:\t{}".format(train_accuracy))
+        print ("\t- Validation Accuracy:\t{}".format(vali_accuracy))
