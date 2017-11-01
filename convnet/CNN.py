@@ -52,7 +52,9 @@ with tf.variable_scope("Softmax"):
 
 # Use Cross entropy cost function
 with tf.name_scope("cross_ent"):
-    cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=layer_fc2, labels=y_true)
+    #cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=layer_fc2, labels=y_true)
+    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=layer_fc2, labels=y_true)
+
     cost = tf.reduce_mean(cross_entropy)
 
 # Use Adam Optimizer
