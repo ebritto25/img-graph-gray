@@ -191,15 +191,14 @@ int EWVector_gray(Mat & img,igraph_vector_t *edges,igraph_vector_t *weight)
 // dada uma imagem (img)
 int EWVector(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
 {
-    int cont = 0,pixel = 0,wcont = 0;
+    int cont = 0,pixel = 0,wcont = 0, dimension = img.cols*img.rows;
     Vec3b intensity1,intensity2;
 
-    for(int camada = 0; camada < 3;camada++)
-    {
         for(int i = 0;i < img.rows;i++)
         {
             for(int j = 0;j < img.cols;j++,pixel++)
             {
+                /*
                 if(camada < 2)
                 {
                     intensity1 = img.at<Vec3b>(i,j);
@@ -207,49 +206,75 @@ int EWVector(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
                     VECTOR(*edges)[cont++] = pixel+(img.cols*img.rows);
                     intensity2 = intensity1;
                     VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada+1]));
-                }
+                }*/
+
+
+
                 if((i < img.rows - 1) && (j < img.cols - 1))//PIXEL NÃO É BORDA, LIGA A DIREITA E ABAIXO
                 {
-
-                    //LIGA COM O VERTICE DA DIREITA E CALCULA O PESO
-                    VECTOR(*edges)[cont++] = pixel;
-                    VECTOR(*edges)[cont++] = pixel+1;
-                    intensity1 = img.at<Vec3b>(i,j);
-                    intensity2 = img.at<Vec3b>(i,j + 1);
-                    VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada]));
-                    //LIGA COM O VERTICE DE BAIXO E CALCULA O PESO
-                    VECTOR(*edges)[cont++] = pixel;
-                    VECTOR(*edges)[cont++] = pixel+(img.cols);
-                    intensity2 = img.at<Vec3b>(i+1,j);
-                    VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada]));
-                    //AVANÇA O CONTADOR DO VETOR 2 PARES A FRENTE
-
+                    for(int k = 0;k < 3;k++)
+                    {
+                        //PRIMEIRA CAMADA
+                        //LIGA COM O VERTICE DA DIREITA E CALCULA O PESO
+                        VECTOR(*edges)[cont++] = pixel+(dimension*k);
+                        VECTOR(*edges)[cont++] = (pixel+(dimension*k))+1;
+                        intensity1 = img.at<Vec3b>(i,j);
+                        intensity2 = img.at<Vec3b>(i,j + 1);
+                        VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[k] - intensity2.val[k]));
+                        //LIGA COM O VERTICE DE BAIXO E CALCULA O PESO
+                        VECTOR(*edges)[cont++] = pixel+(dimension*k);
+                        VECTOR(*edges)[cont++] = (pixel+(dimension*k))+(img.cols);
+                        intensity2 = img.at<Vec3b>(i+1,j);
+                        VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[k] - intensity2.val[k]));
+                        //AVANÇA O CONTADOR DO VETOR 2 PARES A FRENTE
+                    }
                 }
                 else
                 {
                     if((i == (img.rows - 1)) && (j == (img.cols - 1)))//ULTIMO PIXEL, NÃO FAZ NADA
+<<<<<<< HEAD
                        continue;
+=======
+                        continue;
+>>>>>>> ab22a3613354674ae814fb61befd0320d3b5a6ee
 
                     if(i == (img.rows - 1))//PIXEL NA BORDA INFERIOR, LIGA SÓ A DIREITA
                     {
-                        VECTOR(*edges)[cont++] = pixel;
-                        VECTOR(*edges)[cont++] = pixel+1;
-                        intensity1 = img.at<Vec3b>(i,j);
-                        intensity2 = img.at<Vec3b>(i,j + 1);
-                        VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada]));
+                        for(int k = 0;k < 3;k++)
+                        {
+                            VECTOR(*edges)[cont++] = pixel+(dimension*k);
+                            VECTOR(*edges)[cont++] = (pixel+(dimension*k))+1;
+                            intensity1 = img.at<Vec3b>(i,j);
+                            intensity2 = img.at<Vec3b>(i,j + 1);
+                            VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[k] - intensity2.val[k]));
+                        }
                     }
                     else if(j == (img.cols - 1))//PIXEL NA BORDA DIREITA, LIGA SÓ ABAIXO
                     {
-                        VECTOR(*edges)[cont++] = pixel;
-                        VECTOR(*edges)[cont++] = pixel+(img.cols);
-                        intensity1 = img.at<Vec3b>(i,j);
-                        intensity2 = img.at<Vec3b>(i+1,j);
-                        VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada]));
+                        for(int k = 0;k < 3;k++)
+                        {
+                            VECTOR(*edges)[cont++] = pixel+(dimension*k);
+                            VECTOR(*edges)[cont++] = (pixel+(dimension*k))+(img.cols);
+                            intensity1 = img.at<Vec3b>(i,j);
+                            intensity2 = img.at<Vec3b>(i+1,j);
+                            VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[k] - intensity2.val[k]));
+                        }
                     }
                 }
+
+                //CAMADA 1-2
+                VECTOR(*edges)[cont++] = pixel;
+                VECTOR(*edges)[cont++] = pixel + dimension;
+                intensity1 = img.at<Vec3b>(i,j);
+                intensity2 = intensity1;
+                VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[0] - intensity2.val[1]));
+                //CAMADA 2-3
+                VECTOR(*edges)[cont++] = pixel + dimension;
+                VECTOR(*edges)[cont++] = pixel + (dimension*2);
+                VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[1] - intensity2.val[2]));
+
             }
         }
-    }
     return 1;
 }
 

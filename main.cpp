@@ -24,7 +24,11 @@ int main(int argc, char* argv[])
 
     // Caso especial bases com nomes nas pastas
         ifstream File;
+<<<<<<< HEAD
         File.open(path+"/folders_name.txt");
+=======
+        File.open("../home/rodrigo/ic/bases/UCMerced_LandUse/Images/folders_name.txt");
+>>>>>>> ab22a3613354674ae814fb61befd0320d3b5a6ee
         if(!File.is_open())
         {
             cerr << "Problema ao Abrir Nomes das Pastas" << '\n';
@@ -40,16 +44,27 @@ int main(int argc, char* argv[])
 
 
     DB(folders_name.size());
+<<<<<<< HEAD
     // temporario
     int number_folders = folders_name.size(), number_images = 400;
 
 
 
+=======
+
+    int number_folders = folders_name.size(), number_images = 160;
+
+    string path = argv[1];
+>>>>>>> ab22a3613354674ae814fb61befd0320d3b5a6ee
     string image_codec = ".tif";
 
 
     image_base base{image_codec,path,number_folders,number_images,
+<<<<<<< HEAD
                 image_base::TYPE::RGBBRODATZ,image_base::COLOR::RGB};
+=======
+                image_base::TYPE::UCM,image_base::COLOR::RGB};
+>>>>>>> ab22a3613354674ae814fb61befd0320d3b5a6ee
 
     if(!base.create_arff_file(argv[2]))
     {
