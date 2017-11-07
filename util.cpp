@@ -8,85 +8,77 @@
 #include <map> // multimap
 #include "vectorgraph.hpp"
 
-#define DB(X) std::cerr << #X << '=' << X << '\n';
+#define DEBUGGER(X) std::cerr << #X << '=' << X << '\n';
 
 using namespace cv;
 using namespace std;
 
 
-multimap<int,int> gerar_conexao_todos_todos(Mat& imagem)
+multimap<int,int> gera_conexao_todos_todos(Mat& imagem)
 {
-    multimap<int,int> conexao;
-	
-	/*  
-		Função  vai gerar uma conexão de todos os nós com todos os outros
-			-Vai verificar se já teve conexão entre os nós atuais
-				-Realiza a conexão caso não haja
-	*/
-    for(int i = 0; i < imagem.rows; i++)
+    multimap<int,int> conexao; // tamanho == quantidade de pixels
+    
+
+
+    for(int i = 0,pixel = 0,aux = 0; i < imagem.rows; i++,pixel++)
     {
-        for(int j = 0; j < imagem.cols; j++)
+        for(int j = 0; j < imagem.cols; j++,aux++)
         {
+            bool ja_conectado = false;
+            auto it_key = conexao.equal_range(pixel);
 
+            if(aux != pixel)
+            {
+                // verifica se o valor já foi conectado a chave
+                for( auto it = it_key.first; it != it_key.second; it++)
+                {
+                    if( it->second == aux ) // se achar algum valor já existente, não adiciona
+                    {
+                        ja_conectado = true;
+                        break;
+                    }
+                }
+            }
+            else
+                ja_conectado = true;
 
+            if(!ja_conectado)
+            {
+                conexao.emplace(std::make_pair(pixel,aux));
+                conexao.emplace(std::make_pair(aux,pixel));
+            }
         }
-
     }
-	
-	
-	
 
-	
-	
 
-	return conexoes;
+
+
+    return conexao;
 }
 
 
-
-// gera uma matriz de adjacência a partir de uma dada imagem(image)
-void gera_mat_adj(igraph_matrix_t* mat_adj,Mat& image,igraph_vector_t* weights)
+void edges_weights_gray_todos(Mat & img,multimap<int,int> conexoes, igraph_vector_t *edges,igraph_vector_t *weight)
 {
+    int cont = 0,wcont = 0;
+    for(auto x : conexoes)
+    {
+        VECTOR(*edges)[cont++] = x.first;
+        VECTOR(*edges)[cont++] = x.second;
+        int x_init = x.first/img.cols, xf = x.second/img.cols;
+        int y_init = x.first%img.cols, yf = x.second%img.cols;
+        VECTOR(*weight)[wcont++] = abs(xf - x_init) + abs(yf-y_init)  + abs((int) img.at<uchar>((x.first/img.cols),(x.first%img.cols)) - img.at<uchar>((x.second/img.cols),(x.second%img.cols)));
+    }
 
-	igraph_matrix_init(mat_adj,0,0);
-	igraph_matrix_add_cols(mat_adj,image.cols*image.rows);
-	igraph_matrix_add_rows(mat_adj,image.cols*image.rows);
-
-
-	for(int i = 0; i < image.rows*image.cols;i++)
-		for(int j = 0; j < image.rows*image.cols;j++)
-			MATRIX(*mat_adj,i,j) = image.at<uchar>(i/image.cols,i%image.rows) - image.at<uchar>(j/image.cols,j%image.rows);
-
-	int weight_index = 0;
-
-	for(int i = 0; i < image.rows*image.cols;i++)
-	{
-        for(int j = i+1; j < image.rows*image.cols-1;j++)
-		{
-		    VECTOR(*weights)[weight_index] = MATRIX(*mat_adj,i,j);
-		}
-		weight_index++;
-	}
-
-}
-
-
-// mostra a imagem(img)
-void mostra_img(Mat img)
-{
-    namedWindow("Imagem");
-    imshow("Imagem",img);
-    waitKey(0);
 }
 
 // gera uma string contendo os valores de média
 // e desvio padrão do vetor (v)
-string gera_vector_arff(igraph_vector_t *v)
+string gera_str_arff(igraph_vector_t *v)
 {
 
   long int i, l = igraph_vector_size(v);
 
-  string res {""};
+  string res{""};
 
   for (i=0; i<l; i += 2)
     res += to_string((double) VECTOR(*v)[i]) + "," + to_string((double) VECTOR(*v)[i+1])+",";
@@ -103,8 +95,8 @@ igraph_t createGraph(Mat &imagem)
     igraph_integer_t n = imagem.rows * imagem.cols * imagem.channels();
     igraph_empty(&graph,n,IGRAPH_UNDIRECTED);
 
-    cout << "Criado grafo "<< igraph_vcount(&graph) << " nós\n";
-    cout << "Imagem: "<< imagem.cols << 'x' << imagem.rows << '\n';
+    cerr << "Criado grafo "<< igraph_vcount(&graph) << " nós\n";
+    cerr << "Imagem: "<< imagem.cols << 'x' << imagem.rows << '\n';
 
     return graph;
 }
@@ -175,14 +167,13 @@ void define_pixels_destino(T& to,Mat& image,image_base::COLOR color)
 
 // gera um vetor de edges e de weight
 // dada uma imagem (img) em tons de cinza
-int EWVector_gray(Mat & img,igraph_vector_t *edges,igraph_vector_t *weight)
+void EWVector_gray(Mat & img,igraph_vector_t *edges,igraph_vector_t *weight)
 {
     int cont = 0,pixel = 0,wcont = 0;
 
-
-    for(int i = 0;i < img.rows;i++)
+    for(int i = 0; i < img.rows;i++)
     {
-        for(int j = 0;j < img.cols;j++,pixel++)
+        for(int j = 0; j < img.cols;j++,pixel++)
         {
             if((i < img.rows - 1) && (j < img.cols - 1))//PIXEL NÃO É BORDA, LIGA A DIREITA E ABAIXO
             {
@@ -219,21 +210,20 @@ int EWVector_gray(Mat & img,igraph_vector_t *edges,igraph_vector_t *weight)
             }
         }
     }
-    return 1;
 }
 
 // gera um vetor de edges e de weight
 // dada uma imagem (img)
-int EWVector(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
+void EWVector(Mat &img, igraph_vector_t *edges,igraph_vector_t *weight)
 {
     int cont = 0,pixel = 0,wcont = 0;
     Vec3b intensity1,intensity2;
 
     for(int camada = 0; camada < 3;camada++)
     {
-        for(int i = 0;i < img.rows;i++)
+        for(int i = 0; i < img.rows;i++)
         {
-            for(int j = 0;j < img.cols;j++,pixel++)
+            for(int j = 0; j < img.cols;j++,pixel++)
             {
                 if(camada < 2)
                 {
@@ -285,7 +275,6 @@ int EWVector(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
             }
         }
     }
-    return 1;
 }
 
 //gera um vetor resultante que contem as médias
@@ -373,8 +362,8 @@ string atributeGenerator(string arg,image_base& base,bool with_mst)
         avgVector(&edges_mst,&vWeights,&res);
     }
 
-    string str_res = gera_vector_arff(&res);
-    cout << '\n';
+    string str_res = gera_str_arff(&res);
+    cerr << '\n';
 
 
     //DESTRUIÇÃO DOS ELEMENTOS
@@ -399,23 +388,26 @@ string atributeGenerator_gray(string arg,image_base& base,bool with_mst)
     igraph_vector_ptr_t vPath,ePath;
 
     Mat image = imread(arg);
+    cvtColor(image,image,COLOR_RGB2GRAY);
+
+    auto conexao = gera_conexao_todos_todos(image);
 
     const int from[] = {0,(image.cols-1),image.cols/2,image.cols*(image.rows/2)};
     igraph_vs_t to[4];
 
     define_pixels_destino(to,image,base.color());
 
-    cvtColor(image,image,COLOR_RGB2GRAY);
-
     //INICIALIZAÇÃO DE VETORES
-    VectorGraph vEdges((2*((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols))));
-    VectorGraph vWeights((2*image.cols*image.rows-image.cols-image.rows)+(2*image.rows*image.cols));
+//    VectorGraph vEdges((2*((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols))));
+//   VectorGraph vWeights((2*image.cols*image.rows-image.cols-image.rows)+(2*image.rows*image.cols));
+    int n = image.cols*image.rows;
+    VectorGraph vEdges(n*(n-1));
+    VectorGraph vWeights((n*(n-1))/2);
     VectorGraph res;
     VectorGraph edges_mst;
 
     igraph_vector_ptr_init(&vPath,1);
     igraph_vector_ptr_init(&ePath,1);
-
 
     VECTOR(vPath)[0] = calloc(1,sizeof(igraph_vector_t));
     VECTOR(ePath)[0] = calloc(1,sizeof(igraph_vector_t));
@@ -425,9 +417,7 @@ string atributeGenerator_gray(string arg,image_base& base,bool with_mst)
 
     graph = createGraph(image);
 
-
-
-    EWVector_gray(image,&vEdges,&vWeights);
+    edges_weights_gray_todos(image,conexao,&vEdges,&vWeights);
     igraph_add_edges(&graph,&vEdges,0);
 
     //CALCULA E IMPRIME MENOR CAMINHO
@@ -444,10 +434,7 @@ string atributeGenerator_gray(string arg,image_base& base,bool with_mst)
         avgVector(&edges_mst,&vWeights,&res);
     }
 
-    string str_res = gera_vector_arff(&res);
-
-
-
+    string str_res = gera_str_arff(&res);
 
     //DESTRUIÇÃO DOS ELEMENTOS
     igraph_vector_destroy((igraph_vector_t*)VECTOR(vPath)[0]);
@@ -467,7 +454,6 @@ std::mutex mt;
 // extrai valores de uma dada base de imagem
 void extrai_valor(int folder,image_base& base,bool with_mst)
 {
-    Mat image = imread(base.get_image_in_folder(folder,base.get_image_base_type(),0));
 
     stringstream values;
 

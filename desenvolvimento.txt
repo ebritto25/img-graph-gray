@@ -1,0 +1,3 @@
+- Conexão todos-todos realizada
+   
+- Desvio padrão ta dando 0

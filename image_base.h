@@ -57,10 +57,10 @@ private:
     string path_to_folders;
     int number_of_folders;
     int number_of_images;
+    TYPE base_type;
     ofstream arff_file;
     COLOR color_scheme;
     Mat model_img;
-    TYPE base_type;
 
 };
 
