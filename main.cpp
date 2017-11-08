@@ -53,7 +53,6 @@ int main(int argc, char* argv[])
     image_base base{image_codec,path,number_folders,number_images,
                 image_base::TYPE::BRODATZ,image_base::COLOR::GRAY};
 
-
     if(!base.create_arff_file(argv[2]))
     {
         cerr << "PROBLEMA AO ABRIR ARQUIVO ARFF\n";

@@ -5,7 +5,7 @@
 #include <iostream>
 #include <functional>
 #include <thread>
-#include <map> // multimap
+#include <unordered_map> // multimap
 #include "vectorgraph.hpp"
 
 #define DEBUGGER(X) std::cerr << #X << '=' << X << '\n';
@@ -14,9 +14,9 @@ using namespace cv;
 using namespace std;
 
 
-multimap<int,int> gera_conexao_todos_todos(Mat& imagem)
+unordered_multimap<int,int> gera_conexao_todos_todos(Mat& imagem)
 {
-    multimap<int,int> conexao; // tamanho == quantidade de pixels
+    unordered_multimap<int,int> conexao; // tamanho == quantidade de pixels
     
 
 
@@ -57,7 +57,7 @@ multimap<int,int> gera_conexao_todos_todos(Mat& imagem)
 }
 
 
-void edges_weights_gray_todos(Mat & img,multimap<int,int> conexoes, igraph_vector_t *edges,igraph_vector_t *weight)
+void edges_weights_gray_todos(Mat & img,unordered_multimap<int,int> conexoes, igraph_vector_t *edges,igraph_vector_t *weight)
 {
     int cont = 0,wcont = 0;
     for(auto x : conexoes)
@@ -161,8 +161,6 @@ void define_pixels_destino(T& to,Mat& image,image_base::COLOR color)
     }
 
 }
-
-
 
 
 // gera um vetor de edges e de weight
@@ -425,6 +423,7 @@ string atributeGenerator_gray(string arg,image_base& base,bool with_mst)
     {
         igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from[i],to[i],&vWeights,IGRAPH_ALL,NULL,NULL);
         avgVector((igraph_vector_t*)VECTOR(ePath)[0],&vWeights,&res);
+
     }
 
     if(with_mst)
