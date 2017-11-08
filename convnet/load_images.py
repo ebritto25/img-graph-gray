@@ -1,4 +1,11 @@
 import cv2
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--path",help = "PATH TO THE FOLDER")
+
+args = parser.parse_args()
+
 
 def loadimages(path,n_Classes,n_Img):
 	#path/textures/class_1/1
@@ -13,7 +20,9 @@ def loadimages(path,n_Classes,n_Img):
 
 
 
-x,y = loadimages("/home/eduardo/ProjQt/textures/class_1",2,10)
+#x,y = loadimages("/home/eduardo/ProjQt/textures/class_1",2,10)
+
+print(args.path)
 
 #cv2.imshow("teste",cv2.imread("/home/eduardo/ProjQt/textures/class_1/1/output1_45.tiff"))
 #cv2.waitKey(0)

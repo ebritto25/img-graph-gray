@@ -2,16 +2,15 @@ import tensorflow as tf
 import cv2
 import numpy as np
 import time
-'''
-from tensorflow.examples.tutorials.mnist import input_data
-#data = input_data.read_data_sets('data/MNIST/', one_hot=True)
+import argparse
+
+# ARGUMENT DEFINITION
+parser = argparse.ArgumentParser()
+parse.add_argument("--path",help = "PATH TO THE IMAGE FOLDER")
+
+args = parser.parse_args()
 
 
-print("Size of:")
-print("- Training-set:\t\t{}".format(len(data.train.labels)))
-print("- Test-set:\t\t{}".format(len(data.test.labels)))
-print("- Validation-set:\t{}".format(len(data.validation.labels)))
-'''
 
 # Placeholder variable for the input images
 x = tf.placeholder(tf.float32, shape=[None, 32*32], name='X')
