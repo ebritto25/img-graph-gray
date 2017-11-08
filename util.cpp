@@ -266,6 +266,7 @@ string atributeGenerator(string arg,image_base& base,bool with_mst)
 
     if(base.color() == image_base::COLOR::RGB)
     {
+
         igraph_vs_t to[16];
 
         const int from[] = {0,(image.cols-1),(image.cols-1 + image.cols*image.rows * 2),(image.cols*image.rows*2),
@@ -327,10 +328,12 @@ string atributeGenerator(string arg,image_base& base,bool with_mst)
         for(int i = 0 ; i < 16; i++)
           igraph_vs_destroy(&to[i]);
 
-
     }
     else
     {
+
+
+
         const int from[] = {0,(image.cols-1),image.cols/2,image.cols*(image.rows/2)};
         igraph_vs_t to[4];
 
@@ -388,9 +391,7 @@ string atributeGenerator(string arg,image_base& base,bool with_mst)
 
         for(int i = 0 ; i < 4; i++)
           igraph_vs_destroy(&to[i]);
-
     }
-
 
 
     return str_res;
