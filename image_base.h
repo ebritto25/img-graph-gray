@@ -17,7 +17,7 @@ public:
     enum class COLOR {GRAY, RGB};
 
     image_base(string codec,string path_folder, int folders, int images,TYPE type,COLOR scheme)
-    : image_codec{codec} , path_to_folders{path_folder},number_of_folders{folders},number_of_images{images}, base_type{type}, color_scheme{scheme}
+    : image_codec{codec} , path_to_folders{path_folder},number_of_folders{folders},number_of_images{images}, color_scheme{scheme},base_type{type}
     {
     }
 
