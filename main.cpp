@@ -1,274 +1,49 @@
 #include <QCoreApplication>
-#include <opencv2/opencv.hpp>
-#include <opencv2/core/cuda.hpp>
-#include <igraph.h>
-#include <iostream>
-#include <fstream>
 #include <cmath>
-#include <QElapsedTimer>
-#include "vectorgraph.hpp"
-
-using namespace cv;
-using namespace std;
-
-void mostrarimg(Mat img)
-{
-    namedWindow("Imagem");
-    imshow("Imagem",img);
-    waitKey(0);
-}
-
-igraph_t createGraph(Mat &imagem)
-{
-    igraph_t graph;
-
-    igraph_integer_t n = imagem.rows * imagem.cols * imagem.channels();
-    igraph_empty(&graph,n,IGRAPH_UNDIRECTED);
+#include <istream>
+#include "util.cpp"
 
 
-    cout << "Criado grafo "<< igraph_vcount(&graph) << " nós\n";
-    cout << "Imagem: "<< imagem.cols << 'x' << imagem.rows << '\n';
-    return graph;
-}
 
-
-void gera_mat_adj(igraph_matrix_t* mat_adj,Mat& image,igraph_vector_t* weights)
+int main(int argc, char* argv[])
 {
 
-   igraph_matrix_init(mat_adj,0,0);
-   igraph_matrix_add_cols(mat_adj,image.cols*image.rows);
-   igraph_matrix_add_rows(mat_adj,image.cols*image.rows);
-
-    for(int i = 0; i < image.rows*image.cols;i++)
-        for(int j = 0; j < image.rows*image.cols;j++)
-            MATRIX(*mat_adj,i,j) = image.at<uchar>(i/image.cols,i%image.rows) - image.at<uchar>(j/image.cols,j%image.rows);
-
-    int weight_index = 0;
-
-    for(int i = 0; i < image.rows*image.cols;i++)
-        for(int j = i+1; j < image.rows*image.cols;j++)
-                VECTOR(*weights)[weight_index++] = MATRIX(*mat_adj,i,j);
-}
-
-
-int EWVector_gray(Mat & img,igraph_vector_t *edges,igraph_vector_t *weight)
-{
-    int cont = 0,pixel = 0,wcont = 0;
-
-
-    for(int i = 0;i < img.rows;i++)
+    if(argc < 2)
     {
-        for(int j = 0;j < img.cols;j++,pixel++)
+        std::cerr << "Quantidade de argumentos inválida!\n";
+        exit(-1);
+    }
+
+
+    string path = argv[1];
+
+    // Pra lembrar de configurar os argumentos
+    std::cout << "Caminho para Base que será utilizada:\n\t" << path << "\nNome do arquivo ARFF:\n\t"<< argv[2] << '\n';
+    std::cout << "Continuar?\n";
+    std::cin.get();
+
+    // Caso especial bases com nomes nas pastas
+        ifstream File;
+<<<<<<< HEAD
+        File.open(path+"/folders_name.txt");
+=======
+        File.open("../home/rodrigo/ic/bases/UCMerced_LandUse/Images/folders_name.txt");
+>>>>>>> ab22a3613354674ae814fb61befd0320d3b5a6ee
+        if(!File.is_open())
         {
-            if((i < img.rows - 1) && (j < img.cols - 1))//PIXEL NÃO É BORDA, LIGA A DIREITA E ABAIXO
-            {
-                //LIGA COM O VERTICE DA DIREITA E CALCULA O PESO
-                VECTOR(*edges)[cont] = pixel;
-                VECTOR(*edges)[cont+1] = pixel+1;
-                VECTOR(*weight)[wcont++] = abs(((int)img.at<uchar>(i,j) - (int)img.at<uchar>(i,j + 1)));
-                //LIGA COM O VERTICE DE BAIXO E CALCULA O PESO
-                VECTOR(*edges)[cont+2] = pixel;
-                VECTOR(*edges)[cont+3] = pixel+(img.cols);
-                VECTOR(*weight)[wcont++] = abs(((int)img.at<uchar>(i,j) - (int)img.at<uchar>(i+1,j)));
-                //AVANÇA O CONTADOR DO VETOR 2 PARES A FRENTE
-                cont += 4;
-            }
-            else
-            {
-                if((i == (img.rows - 1)) && (j == (img.cols - 1)))//ULTIMO PIXEL, NÃO FAZ NADA
-                    continue;
-
-                if(i == (img.rows - 1))//PIXEL NA BORDA INFERIOR, LIGA SÓ A DIREITA
-                {
-                    VECTOR(*edges)[cont] = pixel;
-                    VECTOR(*edges)[cont+1] = pixel+1;
-                    VECTOR(*weight)[wcont++] = abs(((int)img.at<uchar>(i,j) - (int)img.at<uchar>(i,j + 1)));
-                    cont += 2;
-                }
-                if(j == (img.cols - 1))//PIXEL NA BORDA DIREITA, LIGA SÓ ABAIXO
-                {
-                    VECTOR(*edges)[cont] = pixel;
-                    VECTOR(*edges)[cont+1] = pixel+(img.cols);
-                    VECTOR(*weight)[wcont++] = abs(((int)img.at<uchar>(i,j) - (int)img.at<uchar>(i+1,j)));
-                    cont += 2;
-                }
-            }
+            cerr << "Problema ao Abrir Nomes das Pastas" << '\n';
+            exit(EXIT_FAILURE);
         }
-    }
-    return 1;
-}
-
-int EWVector(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
-{
-    int cont = 0,pixel = 0,wcont = 0;
-    Vec3b intensity1,intensity2;
-
-    for(int camada = 0; camada < 3;camada++)
-    {
-        for(int i = 0;i < img.rows;i++)
-        {
-            for(int j = 0;j < img.cols;j++,pixel++)
-            {
-                if(camada < 2)
-                {
-                    intensity1 = img.at<Vec3b>(i,j);
-                    VECTOR(*edges)[cont++] = pixel+(img.cols*img.rows);
-                    intensity2 = intensity1;
-                    VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada+1]));
-                }
-                if((i < img.rows - 1) && (j < img.cols - 1))//PIXEL NÃO É BORDA, LIGA A DIREITA E ABAIXO
-                {
-
-                    //LIGA COM O VERTICE DA DIREITA E CALCULA O PESO
-                    VECTOR(*edges)[cont++] = pixel;
-                    VECTOR(*edges)[cont++] = pixel+1;
-                    intensity1 = img.at<Vec3b>(i,j);
-                    intensity2 = img.at<Vec3b>(i,j + 1);
-                    VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada]));
-                    //LIGA COM O VERTICE DE BAIXO E CALCULA O PESO
-                    VECTOR(*edges)[cont++] = pixel;
-                    VECTOR(*edges)[cont++] = pixel+(img.cols);
-                    intensity2 = img.at<Vec3b>(i+1,j);
-                    VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada]));
-                    //AVANÇA O CONTADOR DO VETOR 2 PARES A FRENTE
-
-                }
-                else
-                {
-                    if((i == (img.rows - 1)) && (j == (img.cols - 1)))//ULTIMO PIXEL, NÃO FAZ NADA
-                        continue;
-
-                    if(i == (img.rows - 1))//PIXEL NA BORDA INFERIOR, LIGA SÓ A DIREITA
-                    {
-                        VECTOR(*edges)[cont++] = pixel;
-                        VECTOR(*edges)[cont++] = pixel+1;
-                        intensity1 = img.at<Vec3b>(i,j);
-                        intensity2 = img.at<Vec3b>(i,j + 1);
-                        VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada]));
-                    }
-                    if(j == (img.cols - 1))//PIXEL NA BORDA DIREITA, LIGA SÓ ABAIXO
-                    {
-                        VECTOR(*edges)[cont++] = pixel;
-                        VECTOR(*edges)[cont++] = pixel+(img.cols);
-                        intensity1 = img.at<Vec3b>(i,j);
-                        intensity2 = img.at<Vec3b>(i+1,j);
-                        VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada]));
-                    }
-                }
-            }
-        }
-    }
-    return 1;
-}
-
-string print_vector(igraph_vector_t *v) {
-  long int i, l=igraph_vector_size(v);
-  string res {""};
-  for (i=0; i<l; i += 2) {
-    res += to_string((double) VECTOR(*v)[i]) + "," + to_string((double) VECTOR(*v)[i+1])+",";
-  }
-
-  return res;
-}
-
-void avgVector(igraph_vector_t *edges,igraph_vector_t *weights, igraph_vector_t *res)
-{
-    igraph_real_t sum,des;
-    int size = igraph_vector_size(edges);
-
-    for(int i = 0;i < size;i++)
-    {
-        sum += (igraph_real_t)VECTOR(*weights)[(int)VECTOR(*edges)[i]];
-    }
-
-    sum /= size;
-
-    igraph_vector_push_back(res,sum);
-
-    for(int i = 0;i < size;i++)
-    {
-        des += pow(((igraph_real_t)VECTOR(*weights)[(int)VECTOR(*edges)[i]])-sum,2);
-    }
-
-    des /= size;
-    des = sqrt(des);
-
-    igraph_vector_push_back(res,des);
-}
-
-string atributeGenerator(string arg)
-{
-    igraph_t graph,mst;
-    igraph_vector_t edges,weights,res, edges_mst;
-
-    igraph_vector_ptr_t vPath,ePath;
-    igraph_vector_long_t pred,inbound;
-    igraph_vs_t to[16];
-
-    Mat image = imread(arg);
-
-    const int ultimo_pixel = (  (image.cols*image.rows)-1)+(image.cols*image.rows*2) ;
-    const int primeiro_pixel_ultima = ((image.cols*image.rows)-image.cols)+(image.cols*image.rows*2);
-    const int ultimo_pixel_1  = (image.cols*image.rows) -1;
-    const int primeiro_pixel_ultima_1 = (image.cols*image.rows)-image.cols;
-    const int meio_vertical_1 = (image.cols*(5/2));
-    const int meio_horizontal_1 = ( (image.cols*image.rows)/2 ) + (image.cols-1);
-
-    //INICIALIZAÇÃO DE VETORES
-    VectorGraph vEdges((2*((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols))));
-    VectorGraph vWeights((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols));
-    igraph_vector_init(&res,0);
-    igraph_vector_init(&edges_mst,0);
-    igraph_vector_ptr_init(&vPath,1);
-    igraph_vector_ptr_init(&ePath,1);
-    igraph_vector_long_init(&pred,0);
-    igraph_vector_long_init(&inbound,0);
+        std::vector<string> folders_name;
+        std::istream_iterator<string> eos;
+        std::istream_iterator<string> input(File);
+        std::copy_if(input,eos,std::back_inserter(folders_name),[](std::string a) { return a[0] != '#'; });
+     //
 
 
-    VECTOR(vPath)[0] = calloc(1,sizeof(igraph_vector_t));
-    VECTOR(ePath)[0] = calloc(1,sizeof(igraph_vector_t));
-
-    igraph_vector_init((igraph_vector_t*)VECTOR(vPath)[0], 0);
-    igraph_vector_init((igraph_vector_t*)VECTOR(ePath)[0], 0);
 
 
-    graph = createGraph(image);
-
-    EWVector(image,vEdges.getVec(),vWeights.getVec());
-    igraph_add_edges(&graph,vEdges.getVec(),0);
-
-    //PIXELS DE PARTIDA
-    int from[] = {0,(image.cols-1),(image.cols-1 + image.cols*image.rows * 2),(image.cols*image.rows*2),
-                  0,(image.cols-1),image.cols/2,image.cols*(image.rows/2),
-                    image.cols*image.rows,(image.cols-1)+(image.cols*image.rows),(image.cols/2)+(image.cols*image.rows),image.cols*(image.rows/2)+(image.cols*image.rows),
-                    image.cols*image.rows*2,(image.cols-1)+(image.cols*image.rows*2),(image.cols/2)+(image.cols*image.rows*2),image.cols*(image.rows/2)+(image.cols*image.rows*2)};
-
-    //PIXELS DE DESTINO
-
-    //caminhos geral
-    igraph_vs_1(&to[0],ultimo_pixel); // ultimo pixel
-    igraph_vs_1(&to[1],primeiro_pixel_ultima);// primeiro pixel ultima camada
-    igraph_vs_1(&to[2],primeiro_pixel_ultima_1); // primeiro pixel ultima linha primeira camada
-    igraph_vs_1(&to[3],ultimo_pixel_1); // ultimo pixel primeira camada
-
-    //primeira camada
-    igraph_vs_1(&to[4],ultimo_pixel_1); // ultimo pixel
-    igraph_vs_1(&to[5],primeiro_pixel_ultima_1); // primeiro pixel ultima linha primeira camada
-    igraph_vs_1(&to[6],meio_vertical_1); // meio vertical
-    igraph_vs_1(&to[7],meio_horizontal_1); // meio horizontal direita]]
-
-    //segunda camada
-    igraph_vs_1(&to[8],(ultimo_pixel_1+(image.cols*image.rows))); // ultimo pixel
-    igraph_vs_1(&to[9],( primeiro_pixel_ultima_1+(image.cols*image.rows))); //primeiro pixel ultima linha
-    igraph_vs_1(&to[10],(meio_vertical_1)+(image.cols*image.rows));
-    igraph_vs_1(&to[11],(meio_horizontal_1)+(image.cols*image.rows));
-
-    //terceira camada
-    igraph_vs_1(&to[12],(ultimo_pixel_1+(image.cols*image.rows*2))); // ultimo pixel
-    igraph_vs_1(&to[13],( primeiro_pixel_ultima_1+(image.cols*image.rows*2))); //primeiro pixel ultima linha
-    igraph_vs_1(&to[14],(meio_vertical_1)+(image.cols*image.rows*2));
-    igraph_vs_1(&to[15],(meio_horizontal_1)+(image.cols*image.rows*2));
-
+<<<<<<< HEAD
     //CALCULA E IMPRIME MENOR CAMINHO
     for(int i = 0;i < 16;i++)
     {
@@ -375,55 +150,35 @@ string atributeGenerator_gray(string arg)
     string str_res = print_vector(&res);
 
     cout << '\n';
+=======
+    DB(folders_name.size());
+<<<<<<< HEAD
+    // temporario
+    int number_folders = folders_name.size(), number_images = 400;
+>>>>>>> f5a5060a85de29bdf055aadf25cd7573fc94387d
 
 
 >>>>>>> master
 
-    //DESTRUIÇÃO DOS ELEMENTOS
-    igraph_vector_destroy((igraph_vector_t*)VECTOR(vPath)[0]);
-    igraph_vector_destroy((igraph_vector_t*)VECTOR(ePath)[0]);
-    igraph_vector_ptr_destroy(&vPath);
-    igraph_vector_ptr_destroy(&ePath);
-    igraph_vector_destroy(&res);
-    igraph_destroy(&graph);
-    igraph_vector_destroy(&edges_mst);
+=======
 
-    return str_res;
+    int number_folders = folders_name.size(), number_images = 160;
 
-}
-
-//=====================
-
-int main(int argc, char* argv[])
-{
-    if(argc != 2)
-        exit(-1);
-
-    bool gray_img = true, brodatz = true;
-
-    string path = argv[1],str_out;
-
-    ofstream File;
-    string output_arff_name = "/output.arff";
-
-    File.open(path+output_arff_name);
+    string path = argv[1];
+>>>>>>> ab22a3613354674ae814fb61befd0320d3b5a6ee
+    string image_codec = ".tif";
 
 
+    image_base base{image_codec,path,number_folders,number_images,
+<<<<<<< HEAD
+                image_base::TYPE::RGBBRODATZ,image_base::COLOR::RGB};
+=======
+                image_base::TYPE::UCM,image_base::COLOR::RGB};
+>>>>>>> ab22a3613354674ae814fb61befd0320d3b5a6ee
 
-    string path_folder = "sub_class_";
-    string image_codec = ".tiff";
-
-
-
-
-    if(!File.is_open())
-     {
-            cerr << "PROBLEMA AO ABRIR ARQUIVO ARFF\n";
-            exit(-2);
-    }
-
-    if(!gray_img)
+    if(!base.create_arff_file(argv[2]))
     {
+<<<<<<< HEAD
             for(int j = 1;j <= 10;j++)
             {
                     int mult = (j-1)*100;
@@ -480,9 +235,12 @@ int main(int argc, char* argv[])
 
         }
 
+=======
+        cerr << "PROBLEMA AO ABRIR ARQUIVO ARFF\n";
+        exit(EXIT_FAILURE);
+>>>>>>> f5a5060a85de29bdf055aadf25cd7573fc94387d
     }
 
-    File.close();
+    thread_handler(base,folders_name,false);
 
-    return 0;
 }

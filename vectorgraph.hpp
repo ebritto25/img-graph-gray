@@ -6,14 +6,20 @@
 class VectorGraph
 {
 public:
+
+
     VectorGraph(int _size = 0);
 
     ~VectorGraph();
 
 
     igraph_real_t& operator[] (int index) {  return vec.stor_begin[index]; }
+    igraph_vector_t* operator& () {  return &vec; }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> f5a5060a85de29bdf055aadf25cd7573fc94387d
     igraph_vector_t* igraph_vector();
     int size();
     void sort();
