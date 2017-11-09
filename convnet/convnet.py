@@ -3,22 +3,24 @@ import cv2
 import numpy as np
 import time
 import argparse
-
+'''
 # ARGUMENT DEFINITION
 parser = argparse.ArgumentParser()
 parse.add_argument("--path",help = "PATH TO THE IMAGE FOLDER")
 
 args = parser.parse_args()
-
+'''
 
 
 # Placeholder variable for the input images
-x = tf.placeholder(tf.float32, shape=[None, 32*32], name='X')
+x = tf.placeholder(tf.float32, shape=[None,32,32], name='X')
 # Reshape it into [num_images, img_height, img_width, num_channels]
 x_image = tf.reshape(x, [-1, 32, 32, 1])
+#x_image = tf.reshape(x, [32, 32, 1])
+
 
 # Placeholder variable for the true labels associated with the images
-y_true = tf.placeholder(tf.float32, shape=[None, 10], name='y_true')
+y_true = tf.placeholder(tf.float32, shape=[None, 13], name='y_true')
 y_true_cls = tf.argmax(y_true, dimension=1)
 
 
@@ -135,7 +137,7 @@ with tf.name_scope("accuracy"):
 
 # Initialize the FileWriter
 writer = tf.summary.FileWriter("Training_FileWriter/")
-writer1 = tf.summary.FileWriter("Validation_FileWriter/")
+#writer1 = tf.summary.FileWriter("Validation_FileWriter/")
 
 
 # Add the cost and accuracy to summary
@@ -147,20 +149,22 @@ merged_summary = tf.summary.merge_all()
 
 num_epochs = 100
 batch_size = 100
-path = "/home/eduardo/ProjQt/textures/class_1"
+path = "/home/eduardo/IC/textures/class_1"
 num_Classes = 13
 num_Img = 100
 
 def loadimages(path,n_Class,n_Img):
 	image = []
 	label = []
-	for i in range(1,num_Classes+1):
-		
-		image.append(cv2.imread(path+"/"+str(n_Class)+"/"+"output"+str(n_Class)+"_"+str(i)+".tiff"))
-		label.append(i)
+	for i in range(0,num_Img):
+		img = cv2.cvtColor(cv2.imread(path+"/"+str(n_Class)+"/"+"output"+str(n_Class)+"_"+str(i)+".tiff"),cv2.COLOR_RGB2GRAY)
+		image.append(img)
+		#print(tf.Session().run(tf.shape(img)))
+		label.append(n_Class)
 			
 	return image[:], label[:]
-
+	#return tf.shape(img)
+#loadimages(path,num_Classes,num_Img)
 
 with tf.Session() as sess:
     # Initialize all variables
@@ -201,4 +205,5 @@ with tf.Session() as sess:
         
         print("Epoch "+str(epoch+1)+" completed : Time usage "+str(int(end_time-start_time))+" seconds")
         print("\tAccuracy:")
-        print ("\t- Training Accuracy:\t{}".format(train_accuracy))
+        print("\t- Training Accuracy:\t{}".format(train_accuracy))
+

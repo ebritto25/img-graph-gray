@@ -167,7 +167,7 @@ with tf.Session() as sess:
             
             # Get a batch of images and labels
             x_batch, y_true_batch = data.train.next_batch(batch_size)
-            
+            print(y_true_batch)
             # Put the batch into a dict with the proper names for placeholder variables
             feed_dict_train = {x: x_batch, y_true: y_true_batch}
             
