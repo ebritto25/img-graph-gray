@@ -20,8 +20,8 @@ x_image = tf.reshape(x, [-1, 32, 32, 1])
 
 
 # Placeholder variable for the true labels associated with the images
-y_true = tf.placeholder(tf.float32, shape=[None, 13], name='y_true')
-y_true_cls = tf.argmax(y_true, dimension=1)
+y_true = tf.placeholder(tf.int32, name='y_true')
+y_true_cls = tf.argmax(y_true)
 
 
 ############ CONVOLUTION LAYER CREATION #############
@@ -121,7 +121,7 @@ with tf.variable_scope("Softmax"):
 
 # Use Cross entropy cost function
 with tf.name_scope("cross_ent"):
-    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=layer_fc2, labels=y_true)
+    cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=layer_fc2, labels=y_true)
     cost = tf.reduce_mean(cross_entropy)
 
 # Use Adam Optimizer
@@ -160,8 +160,12 @@ def loadimages(path,n_Class,n_Img):
 		img = cv2.cvtColor(cv2.imread(path+"/"+str(n_Class)+"/"+"output"+str(n_Class)+"_"+str(i)+".tiff"),cv2.COLOR_RGB2GRAY)
 		image.append(img)
 		#print(tf.Session().run(tf.shape(img)))
-		label.append(n_Class)
-			
+		label.append(n_Class-1)
+		#tf_labels = tf.reshape(label,[-1,13])	
+
+	#out = tf.Session().run(tf.shape(label))
+	#print(label)
+
 	return image[:], label[:]
 	#return tf.shape(img)
 #loadimages(path,num_Classes,num_Img)
@@ -206,4 +210,3 @@ with tf.Session() as sess:
         print("Epoch "+str(epoch+1)+" completed : Time usage "+str(int(end_time-start_time))+" seconds")
         print("\tAccuracy:")
         print("\t- Training Accuracy:\t{}".format(train_accuracy))
-
