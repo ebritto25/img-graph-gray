@@ -19,12 +19,6 @@ void gera_edges_weights(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
 template<image_base::COLOR color>
 void define_pixels_destino(igraph_vs_t* to,Mat& image);
 
-/*
-// extrai valores de uma dada base de imagem
-template<typename T>
-void extrai_valor(T folder,image_base& base,bool with_mst);
-*/
-
 
 
 template<>
@@ -397,34 +391,6 @@ string atributeGenerator(string arg,image_base& base,bool with_mst)
 }
 
 
-/*
-template<>
-void extrai_valor(int folder,image_base& base,bool with_mst)
-{
-    Mat image = imread(base.get_image_in_folder(folder,base.get_image_base_type(),0));
-
-    stringstream values;
-
-
-    for(int i = 0; i < base.images(); i++)
-    {
-        std::cerr << "Thread: " << folder << "\nImagem: " << i << " de " << base.images() << '\n';
-        string img_str  = base.get_image_in_folder(folder,base.get_image_base_type(),i);
-
-        string temp = atributeGenerator(img_str,base,with_mst);
-        temp += "class_"+to_string(folder)+"\n";
-
-        values << temp;
-    }
-
-
-
-    mt.lock();
-    base.put_in_arff_file(values.str());
-    mt.unlock();
-
-}
-*/
 
 mutex mt;
 
@@ -452,21 +418,6 @@ void extrai_valor(string folder,image_base& base,bool with_mst)
 
 }
 
-/*
-void thread_handler(image_base& base,bool with_mst)
-{
-    std::vector<thread> threads;
-
-    threads.reserve(base.folders());
-
-    for(int i = 1; i <= base.folders(); i++)
-        threads.emplace_back(extrai_valor<int>,i,std::ref(base),with_mst);
-
-    for(int i = 0; i < base.folders(); i++)
-        threads[i].join();
-
-}
-*/
 
 void thread_handler(image_base& base,std::vector<string> folders,bool with_mst)
 {

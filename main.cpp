@@ -11,7 +11,7 @@
 int main(int argc, char* argv[])
 {
 
-    if(argc < 5)
+    if(argc < 6)
     {
         cerr << "Quantidade de argumentos inválida!\n";
         exit(EXIT_FAILURE);
@@ -55,9 +55,9 @@ int main(int argc, char* argv[])
     istream_iterator<string> input(File);
     copy_if(input,eos,std::back_inserter(folders_name),[](string a) { return a[0] != '#'; });
 
+    int number_of_folders = folders_name.size(); 
 
     image_base::TYPE base_type;
-
     if(bases[base_name] ==  bases["brodatz"])
         base_type = image_base::TYPE::BRODATZ;
     else if(bases[base_name] ==  bases["rgbbrodatz"])
@@ -69,7 +69,6 @@ int main(int argc, char* argv[])
     else if(bases[base_name] == bases["kylberg"])
         base_type = image_base::TYPE::KYLBERG;
 
-    int number_of_folders = folders_name.size(); 
     image_base base{image_codec,path,number_of_folders,number_of_images,
                         base_type,image_base::COLOR::GRAY};
 
