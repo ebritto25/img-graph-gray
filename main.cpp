@@ -11,15 +11,29 @@
 int main(int argc, char* argv[])
 {
 
-    if(argc < 3)
+    if(argc < 5)
     {
         cerr << "Quantidade de argumentos inválida!\n";
         exit(EXIT_FAILURE);
     }
 
-    string path = argv[1];
+    map<string,int> bases;
 
+    bases["brodatz"] = 1;
+    bases["rgbbrodatz"] = 2;
+    bases["ucm"] = 3;
+    bases["rsscn"] = 4;
+    bases["kylberg"] = 5;
+
+    string path = argv[1];
+    string base_name = argv[2];
     string image_codec = argv[3];
+    bool mst = argv[4];
+    string arff_file = argv[5];
+
+
+
+
 
     if( image_codec.empty() )
     {
@@ -42,20 +56,33 @@ int main(int argc, char* argv[])
     copy_if(input,eos,std::back_inserter(folders_name),[](string a) { return a[0] != '#'; });
 
 
-    int number_images = 0;
+    int number_of_images = 0;
+
+    if(bases[base_name] ==  bases["brodatz"])
+        number_of_images = 256;
+    else if(bases[base_name] ==  bases["rgbbrodatz"])
+        number_of_images = 400;
+    else if(bases[base_name] == bases["ucm"])
+        number_of_images = 100;
+    else if(bases[base_name] == bases["rsscn"])
+        number_of_images = 400;
+    else if(bases[base_name] == bases["kylberg"])
+        number_of_images = 40;
 
 
-    image_base base{image_codec,path,folders_name.size(),number_images,
-                    image_base::TYPE::BRODATZ,image_base::COLOR::GRAY};
+    int number_of_folders = folders_name.size();
+    image_base base{image_codec,path,number_of_folders,number_of_images,
+                        image_base::TYPE::BRODATZ,image_base::COLOR::GRAY};
 
 
-    if(!base.create_arff_file(argv[2]))
+    if(!base.create_arff_file(arff_file))
     {
         cerr << "PROBLEMA AO ABRIR ARQUIVO ARFF\n";
         exit(EXIT_FAILURE);
     }
 
-    thread_handler(base,folders_name,false);
+
+    thread_handler(base,folders_name,mst);
 
 
 }

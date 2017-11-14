@@ -229,7 +229,7 @@ void define_pixels_destino<image_base::COLOR::RGB>(igraph_vs_t* to,Mat& image)
 //gera um vetor resultante que contem as médias e os desvios padrões das distâncias
 void avgVector(igraph_vector_t *edges,igraph_vector_t *weights, igraph_vector_t *res)
 {
-    igraph_real_t sum,des;
+    igraph_real_t sum = 0,des = 0;
     const int size = igraph_vector_size(edges);
 
     for(int i = 0;i < size;i++)
@@ -475,7 +475,7 @@ void thread_handler(image_base& base,std::vector<string> folders,bool with_mst)
     threads.reserve(base.folders());
 
     for(int i = 0; i < base.folders(); i++)
-        threads.emplace_back(extrai_valor<string>,folders[i],std::ref(base),with_mst);
+        threads.emplace_back(extrai_valor,folders[i],std::ref(base),with_mst);
 
 
     for(int i = 0; i < base.folders(); i++)
