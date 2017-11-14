@@ -27,10 +27,10 @@ int main(int argc, char* argv[])
 
     string path = argv[1];
     string base_name = argv[2];
-    string image_codec = argv[3];
-    bool mst = argv[4];
-    string arff_file = argv[5];
-
+    int number_of_images = argv[3];
+    string image_codec = argv[4];
+    bool mst = argv[5];
+    string arff_file = argv[6]; 
 
 
 
@@ -56,23 +56,22 @@ int main(int argc, char* argv[])
     copy_if(input,eos,std::back_inserter(folders_name),[](string a) { return a[0] != '#'; });
 
 
-    int number_of_images = 0;
+    image_base::TYPE base_type;
 
     if(bases[base_name] ==  bases["brodatz"])
-        number_of_images = 256;
+        base_type = image_base::TYPE::BRODATZ;
     else if(bases[base_name] ==  bases["rgbbrodatz"])
-        number_of_images = 400;
+        base_type = image_base::TYPE::RGBBRODATZ;
     else if(bases[base_name] == bases["ucm"])
-        number_of_images = 100;
+        base_type = image_base::TYPE::UCM;
     else if(bases[base_name] == bases["rsscn"])
-        number_of_images = 400;
+        base_type = image_base::TYPE::RSSCN;
     else if(bases[base_name] == bases["kylberg"])
-        number_of_images = 40;
+        base_type = image_base::TYPE::KYLBERG;
 
-
-    int number_of_folders = folders_name.size();
+    int number_of_folders = folders_name.size(); 
     image_base base{image_codec,path,number_of_folders,number_of_images,
-                        image_base::TYPE::BRODATZ,image_base::COLOR::GRAY};
+                        base_type,image_base::COLOR::GRAY};
 
 
     if(!base.create_arff_file(arff_file))
