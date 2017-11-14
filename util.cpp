@@ -15,14 +15,16 @@ using namespace std;
 template<image_base::COLOR color>
 void gera_edges_weights(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight);
 
+// define os pixels de partida para o algoritmo dijkstra
+template<image_base::COLOR color>
+void define_pixels_destino(igraph_vs_t* to,Mat& image);
+
+/*
 // extrai valores de uma dada base de imagem
 template<typename T>
 void extrai_valor(T folder,image_base& base,bool with_mst);
+*/
 
-// define os pixels de partida
-// para o dijkstra
-template<image_base::COLOR color>
-void define_pixels_destino(igraph_vs_t* to,Mat& image);
 
 
 template<>
@@ -140,8 +142,7 @@ void gera_edges_weights<image_base::COLOR::GRAY>(Mat &img,igraph_vector_t *edges
 
 
 
-// gera uma string contendo os valores de média
-// e desvio padrão do vetor (v)
+// gera uma string contendo os valores de média e desvio padrão do vetor(v)
 string gera_str_arff(igraph_vector_t *v)
 {
   long l = igraph_vector_size(v);
@@ -154,8 +155,7 @@ string gera_str_arff(igraph_vector_t *v)
   return res;
 }
 
-// cria um grafo a partir da imagem
-// passada
+// cria um grafo a partir da imagem passada
 igraph_t createGraph(Mat &imagem)
 {
     igraph_t graph;
@@ -210,7 +210,7 @@ void define_pixels_destino<image_base::COLOR::RGB>(igraph_vs_t* to,Mat& image)
     igraph_vs_1(&to[4],ultimo_pixel_1); // ultimo pixel
     igraph_vs_1(&to[5],primeiro_pixel_ultima_1); // primeiro pixel ultima linha primeira camada
     igraph_vs_1(&to[6],meio_vertical_1); // meio vertical
-    igraph_vs_1(&to[7],meio_horizontal_1); // meio horizontal direita]]
+    igraph_vs_1(&to[7],meio_horizontal_1); // meio horizontal direita
 
     //segunda camada
     igraph_vs_1(&to[8],(ultimo_pixel_1+(image.cols*image.rows))); // ultimo pixel
@@ -226,8 +226,7 @@ void define_pixels_destino<image_base::COLOR::RGB>(igraph_vs_t* to,Mat& image)
 
 }
 
-//gera um vetor resultante que contem as médias
-// e os desvios padrões das distâncias
+//gera um vetor resultante que contem as médias e os desvios padrões das distâncias
 void avgVector(igraph_vector_t *edges,igraph_vector_t *weights, igraph_vector_t *res)
 {
     igraph_real_t sum,des;
@@ -397,8 +396,8 @@ string atributeGenerator(string arg,image_base& base,bool with_mst)
     return str_res;
 }
 
-std::mutex mt;
 
+/*
 template<>
 void extrai_valor(int folder,image_base& base,bool with_mst)
 {
@@ -425,11 +424,14 @@ void extrai_valor(int folder,image_base& base,bool with_mst)
     mt.unlock();
 
 }
+*/
 
-template<>
+mutex mt;
+
 void extrai_valor(string folder,image_base& base,bool with_mst)
 {
     Mat image = imread(base.get_image_in_folder(folder,base.get_image_base_type(),0));
+
 
     stringstream values;
 
@@ -450,6 +452,7 @@ void extrai_valor(string folder,image_base& base,bool with_mst)
 
 }
 
+/*
 void thread_handler(image_base& base,bool with_mst)
 {
     std::vector<thread> threads;
@@ -463,6 +466,7 @@ void thread_handler(image_base& base,bool with_mst)
         threads[i].join();
 
 }
+*/
 
 void thread_handler(image_base& base,std::vector<string> folders,bool with_mst)
 {

@@ -46,10 +46,9 @@ public:
 
 
     void set_base_color(COLOR scheme);
-    COLOR color() const ;
+    COLOR color() const;
 
-    template<typename Folder_Type>
-    string get_image_in_folder(Folder_Type,TYPE,int);
+    string get_image_in_folder(string,TYPE,int);
 
 
 private:

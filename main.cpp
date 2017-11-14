@@ -6,15 +6,16 @@
 
 
 
+
+
 int main(int argc, char* argv[])
 {
 
     if(argc < 3)
     {
-        std::cerr << "Quantidade de argumentos inválida!\n";
-        return -1;
+        cerr << "Quantidade de argumentos inválida!\n";
+        exit(EXIT_FAILURE);
     }
-
 
     string path = argv[1];
 
@@ -22,12 +23,9 @@ int main(int argc, char* argv[])
 
     if( image_codec.empty() )
     {
-        std::cout << "Codec da base não informado!\n";
-        return -1;
+        cout << "Codec da base não informado!\n";
+        exit(EXIT_FAILURE);
     }
-
-
-    std::vector<string> folders_name;
 
     ifstream File;
     File.open(path+"/folders_name.txt");
@@ -37,16 +35,18 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-    std::istream_iterator<string> eos;
-    std::istream_iterator<string> input(File);
-    std::copy_if(input,eos,std::back_inserter(folders_name),[](std::string a) { return a[0] != '#'; });
+    vector<string> folders_name;
+
+    istream_iterator<string> eos;
+    istream_iterator<string> input(File);
+    copy_if(input,eos,std::back_inserter(folders_name),[](string a) { return a[0] != '#'; });
 
 
-    int number_folders = folders_name.size(), number_images = 0;
+    int number_images = 0;
 
 
-    image_base base{image_codec,path,number_folders,number_images,
-        image_base::TYPE::BRODATZ,image_base::COLOR::GRAY};
+    image_base base{image_codec,path,folders_name.size(),number_images,
+                    image_base::TYPE::BRODATZ,image_base::COLOR::GRAY};
 
 
     if(!base.create_arff_file(argv[2]))
