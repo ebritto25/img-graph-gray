@@ -9,6 +9,7 @@ exec_name="img-graph-gray"
 
 base_name="brodatz"
 mst=1
+color=0
 codec=".tiff"
 
 
@@ -22,7 +23,7 @@ counter=1
 # Com mst
 for class in $folders_path; do
     number_of_images=$( expr $(ls -l $class$counter/ | wc -l) - 1)
-    $exec_path$exec_name $base_path$class $base_name $number_of_images $codec $mst $arff_path"class$counter""_mst.arff" 
+    $exec_path$exec_name $base_path$class $base_name $number_of_images $codec $color $mst $arff_path"class$counter""_mst.arff" 
 
     counter=$((counter + 1))
 done 
@@ -33,7 +34,7 @@ mst=0
 
 for class in $folders_path; do
     number_of_images=$( expr $(ls -l $class$counter/ | wc -l) - 1)
-    $exec_path$exec_name $base_path$class $base_name $number_of_images $codec $mst $arff_path"class$counter.arff" 
+    $exec_path$exec_name $base_path$class $base_name $number_of_images $codec $color $mst $arff_path"class$counter.arff" 
 
     counter=$((counter + 1))
 done 

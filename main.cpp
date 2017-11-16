@@ -11,9 +11,21 @@
 int main(int argc, char* argv[])
 {
 
-    if(argc < 6)
+    if(argc < 7)
     {
         cerr << "Quantidade de argumentos inválida!\n";
+
+        cerr << "Lista de Argumentos:\n"
+             << "1 - Caminho para base de imagens\n" 
+             << "2 - Nome da base\n"
+             << "3 - Quantidade de imagens\n"
+             << "4 - Codec das imagens\n"
+             << "5 - Imagens GRAY ou RGB(0 ou 1)\n"
+             << "6 - Gerar ou nao MST(1 ou 0)\n"
+             << "7 - Destino do arquivo arff(com o nome do arquivo)\n";
+
+
+
         exit(EXIT_FAILURE);
     }
 
@@ -29,8 +41,9 @@ int main(int argc, char* argv[])
     string base_name = argv[2];
     int number_of_images = std::stoi(argv[3]);
     string image_codec = argv[4];
-    bool mst = std::stoi(argv[5]);
-    string arff_file = argv[6]; 
+    bool gray = std::stoi(argv[5]);
+    bool mst = std::stoi(argv[6]);
+    string arff_file = argv[7]; 
 
 
 
@@ -69,8 +82,14 @@ int main(int argc, char* argv[])
     else if(bases[base_name] == bases["kylberg"])
         base_type = image_base::TYPE::KYLBERG;
 
+    image_base::COLOR color;
+    if(gray)
+        color = image_base::COLOR::GRAY;
+    else 
+        color = image_base::COLOR::RGB;
+
     image_base base{image_codec,path,number_of_folders,number_of_images,
-                        base_type,image_base::COLOR::GRAY};
+                        base_type,color};
 
 
     if(!base.create_arff_file(arff_file))
