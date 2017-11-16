@@ -157,8 +157,6 @@ igraph_t createGraph(Mat &imagem)
     igraph_integer_t n = imagem.rows * imagem.cols * imagem.channels();
     igraph_empty(&graph,n,IGRAPH_UNDIRECTED);
 
-    cout << "Criado grafo "<< igraph_vcount(&graph) << " nós\n";
-    cout << "Imagem: "<< imagem.cols << 'x' << imagem.rows << '\n';
 
     return graph;
 }
@@ -238,7 +236,7 @@ void avgVector(igraph_vector_t *edges,igraph_vector_t *weights, igraph_vector_t 
     for(int i = 0;i < size;i++)
     {
         igraph_real_t temp = ((igraph_real_t)VECTOR(*weights)[(int)VECTOR(*edges)[i]])-sum ;
-        des += temp * temp; // Melhor que usar Pow
+        des += temp * temp; 
     }
 
     des /= size;
