@@ -27,9 +27,9 @@ int main(int argc, char* argv[])
 
     string path = argv[1];
     string base_name = argv[2];
-    int number_of_images = argv[3];
+    int number_of_images = std::stoi(argv[3]);
     string image_codec = argv[4];
-    bool mst = argv[5];
+    bool mst = std::stoi(argv[5]);
     string arff_file = argv[6]; 
 
 
