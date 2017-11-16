@@ -1,8 +1,8 @@
 #!/bin/bash
 
 base_path="/home/rodrigo/ic/bases/rgbbrodatz/"
-exec_path="/home/rodrigo/gdrive/ESTUDOS/ic/build-img-graph-gray-Desktop-Debug/"
-arff_path="/home/rodrigo/ic/resultados_script/brodatz/"
+exec_path="/home/rodrigo/ic/build-img-graph-gray-Desktop-Debug/"
+arff_path="/home/rodrigo/ic/resultados_script/rgbbrodatz/"
 
 exec_name="img-graph-gray"
 
@@ -21,9 +21,8 @@ counter=1
 
 # Com mst
 for class in $folders_path; do
-    number_of_images=$( expr $(ls -l $class$counter/ | wc -l) - 1)
-    $exec_path$exec_name $base_path$class $base_name $number_of_images $codec $mst $arff_path"class$counter""_mst.arff" 
-
+    number_of_images=$( expr $(ls -l $class"_"$class | wc -l) - 1)
+    $exec_path$exec_name $base_path $base_name $number_of_images $codec $mst $arff_path"class$counter""_mst.arff" 
     counter=$((counter + 1))
 done 
 
@@ -33,7 +32,7 @@ mst=0
 
 for class in $folders_path; do
     number_of_images=$( expr $(ls -l $class$counter/ | wc -l) - 1)
-    $exec_path$exec_name $base_path$class $base_name $number_of_images $codec $mst $arff_path"class$counter.arff" 
+    $exec_path$exec_name $base_path $base_name $number_of_images $codec $mst $arff_path"class$counter.arff" 
 
     counter=$((counter + 1))
 done 
