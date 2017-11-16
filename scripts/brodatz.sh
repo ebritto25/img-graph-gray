@@ -1,8 +1,8 @@
 #!/bin/bash
 
-base_path="/home/rodrigo/textures/"
-exec_path="/home/rodrigo/gdrive/ESTUDOS/iniciacao/build-img-graph-gray-Desktop_Qt_5_9_1_GCC_64bit-Debug/"
-arff_path="/home/rodrigo/gdrive/ESTUDOS/iniciacao/resultados/brodatz/"
+base_path="/home/rodrigo/ic/bases/textures/"
+exec_path="/home/rodrigo/ic/build-img-graph-gray-Desktop-Debug/"
+arff_path="/home/rodrigo/ic/resultados_script/brodatz/"
 
 exec_name="img-graph-gray"
 
