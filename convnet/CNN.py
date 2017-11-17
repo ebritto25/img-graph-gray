@@ -1,4 +1,4 @@
-import tensorflow as tf
+from func_cnn import *
 
 # Placeholder variable for the input images
 x = tf.placeholder(tf.float32, shape=[None,32,32], name='X')
@@ -12,84 +12,28 @@ y_true = tf.placeholder(tf.int32, name='y_true')
 y_true_cls = tf.argmax(y_true)
 
 
-############ CONVOLUTION LAYER CREATION #############
-def new_conv_layer(input, num_input_channels, filter_size, num_filters, name):
-    
-    with tf.variable_scope(name) as scope:
-        # Shape of the filter-weights for the convolution
-        shape = [filter_size, filter_size, num_input_channels, num_filters]
-
-        # Create new weights (filters) with the given shape
-        weights = tf.Variable(tf.truncated_normal(shape, stddev=0.05))
-
-        # Create new biases, one for each filter
-        biases = tf.Variable(tf.constant(0.05, shape=[num_filters]))
-
-        # TensorFlow operation for convolution
-        layer = tf.nn.conv2d(input=input, filter=weights, strides=[1, 1, 1, 1], padding='SAME')
-
-        # Add the biases to the results of the convolution.
-        layer += biases
-        
-        return layer, weights
-
-
-############## POOLING LAYER CREATION ###############
-def new_pool_layer(input, name):
-    
-    with tf.variable_scope(name) as scope:
-        # TensorFlow operation for convolution
-        layer = tf.nn.max_pool(value=input, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
-        
-        return layer
-
-
-
-############# RELU LAYER CREATION ################
-def new_relu_layer(input, name):
-    
-    with tf.variable_scope(name) as scope:
-        # TensorFlow operation for convolution
-        layer = tf.nn.relu(input)
-        
-        return layer
-
-
-############# FULLY CONNECTED LAYER CREATION ############
-def new_fc_layer(input, num_inputs, num_outputs, name): 
-    with tf.variable_scope(name) as scope:
-
-        # Create new weights and biases.
-        weights = tf.Variable(tf.truncated_normal([num_inputs, num_outputs], stddev=0.05))
-        biases = tf.Variable(tf.constant(0.05, shape=[num_outputs]))
-        
-        # Multiply the input and weights, and then add the bias-values.
-        layer = tf.matmul(input, weights) + biases
-        
-        return layer
-
 ############## CNN CREATION ############
 # Convolutional Layer 1
 layer_conv1, weights_conv1 = new_conv_layer(input=x_image, num_input_channels=1, filter_size=5, num_filters=6, name ="conv1")
 
-# Pooling Layer 1
-layer_pool1 = new_pool_layer(layer_conv1, name="pool1")
-
 # RelU layer 1
-layer_relu1 = new_relu_layer(layer_pool1, name="relu1")
+layer_relu1 = new_relu_layer(layer_conv1, name="relu1")
+
+# Pooling Layer 1
+layer_pool1 = new_pool_layer(layer_relu1, name="pool1")
 
 # Convolutional Layer 2
-layer_conv2, weights_conv2 = new_conv_layer(input=layer_relu1, num_input_channels=6, filter_size=5, num_filters=16, name= "conv2")
-
-# Pooling Layer 2
-layer_pool2 = new_pool_layer(layer_conv2, name="pool2")
+layer_conv2, weights_conv2 = new_conv_layer(input=layer_pool1, num_input_channels=6, filter_size=5, num_filters=16, name= "conv2")
 
 # RelU layer 2
-layer_relu2 = new_relu_layer(layer_pool2, name="relu2")
+layer_relu2 = new_relu_layer(layer_conv2, name="relu2")
+
+# Pooling Layer 2
+layer_pool2 = new_pool_layer(layer_relu2, name="pool2")
 
 # Flatten Layer
-num_features = layer_relu2.get_shape()[1:4].num_elements()
-layer_flat = tf.reshape(layer_relu2, [-1, num_features])
+num_features = layer_pool2.get_shape()[1:4].num_elements()
+layer_flat = tf.reshape(layer_pool2, [-1, num_features])
 
 # Fully-Connected Layer 1
 layer_fc1 = new_fc_layer(layer_flat, num_inputs=num_features, num_outputs=128, name="fc1")
@@ -122,4 +66,5 @@ with tf.name_scope("accuracy"):
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 writer = tf.summary.FileWriter("Training_FileWriter/")
+
 

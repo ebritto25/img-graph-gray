@@ -9,7 +9,7 @@ import os.path
 
 num_epochs = 100
 batch_size = 100
-path = "/home/eduardo/IC/textures/class_1/"
+path = "/home/eduardo/ProjQt/textures/class_1/"
 num_Classes = 13
 num_Img = 100
 
