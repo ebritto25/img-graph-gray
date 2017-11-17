@@ -31,12 +31,12 @@ $exec_path$exec_name $base_path$class $base_name $number_of_images $codec $color
 # Com mst GRAY 
 mst=1
 color=0
-$exec_path$exec_name $base_path$class $base_name $number_of_images $codec $color $mst $arff_path"rgbbrodatz_mst.arff" 
+$exec_path$exec_name $base_path$class $base_name $number_of_images $codec $color $mst $arff_path"rgbbrodatz_mst_gray.arff" 
 
 
 
 
 # Sem mst GRAY 
 mst=0
-$exec_path$exec_name $base_path$class $base_name $number_of_images $codec $color $mst $arff_path"rgbbrodatz.arff" 
+$exec_path$exec_name $base_path$class $base_name $number_of_images $codec $color $mst $arff_path"rgbbrodatz_gray.arff" 
 
