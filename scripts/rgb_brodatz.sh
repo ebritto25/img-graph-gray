@@ -11,7 +11,6 @@ base_name="rgbbrodatz"
 mst=1
 color=1
 codec=".tif"
-counter=1
 
 
 
@@ -20,45 +19,24 @@ classes=$(ls -d */)
 
 
 # Com mst RGB
-for class in $classes; do
-    number_of_images=$( expr $(ls -l $class"_"$class | wc -l) - 1)
-    $exec_path$exec_name $base_path$class $base_name $number_of_images $codec $color $mst $arff_path"class$counter""_mst.arff" 
-    counter=$((counter + 1))
-done 
+number_of_images=$( expr $(ls -l $class$counter/ | wc -l) - 1)
+$exec_path$exec_name $base_path$class $base_name $number_of_images $codec $color $mst $arff_path"rgbbrodatz_mst.arff" 
 
 # Sem mst RGB
-counter=1
 mst=0
-
-for class in $classes; do
-    number_of_images=$( expr $(ls -l $class"_"$class | wc -l) - 1)
-    $exec_path$exec_name $base_path$class $base_name $number_of_images $codec $color $mst $arff_path"class$counter.arff" 
-    counter=$((counter + 1))
-done 
+$exec_path$exec_name $base_path$class $base_name $number_of_images $codec $color $mst $arff_path"rgbbrodatz.arff" 
 
 
 
 # Com mst GRAY 
-counter=1
 mst=1
 color=0
+$exec_path$exec_name $base_path$class $base_name $number_of_images $codec $color $mst $arff_path"rgbbrodatz_mst_gray.arff" 
 
-for class in $classes; do
-    number_of_images=$( expr $(ls -l $class"_"$class | wc -l) - 1)
-    $exec_path$exec_name $base_path$class $base_name $number_of_images $codec $color $mst $arff_path"class$counter""_mst_gray.arff" 
-
-    counter=$((counter + 1))
-done 
 
 
 
 # Sem mst GRAY 
-counter=1
 mst=0
+$exec_path$exec_name $base_path$class $base_name $number_of_images $codec $color $mst $arff_path"rgbbrodatz_gray.arff" 
 
-for class in $classes; do
-    number_of_images=$( expr $(ls -l $class"_"$class | wc -l) - 1)
-    $exec_path$exec_name $base_path$class $base_name $number_of_images $codec $color $mst $arff_path"class$counter""_gray.arff" 
-
-    counter=$((counter + 1))
-done 
