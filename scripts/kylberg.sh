@@ -6,13 +6,11 @@ arff_path="/home/rodrigo/ic/resultados_script/kylberg/"
 exec_name="img-graph-gray"
 
 
-##Config
 base_name="kylberg"
 mst=1
 color=0 # 0 -> GRAY | 1 -> RGB
-codec=".pgn"
-number_of_images=160
-##
+codec=".png"
+number_of_images=40
 
 # Com mst GRAY
 echo $exec_path$exec_name $base_path$base_name $number_of_images $codec $color $mst $arff_path$base_name"_mst.arff" 

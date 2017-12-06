@@ -1,4 +1,4 @@
-#include <QCoreApplication>
+	#include <QCoreApplication>
 #include <cmath>
 #include <istream>
 #include <map>
