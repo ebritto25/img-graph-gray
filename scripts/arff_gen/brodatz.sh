@@ -28,6 +28,7 @@ for class in $folders_path; do
     counter=$((counter + 1))
 done 
 
+
 # Sem mst
 counter=1
 mst=0
