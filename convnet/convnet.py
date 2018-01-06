@@ -13,12 +13,31 @@ path = "/home/eduardo/IC/textures/class_1/"
 num_Classes = 13
 num_Img = 100
 
+<<<<<<< HEAD
 
+=======
+'''
+def loadimages(path,n_Class,n_Img):
+	image = []
+	label = []
+	for i in range(0,num_Img):
+		img = cv2.cvtColor(cv2.imread(path+"/"+str(n_Class)+"/"+"output"+str(n_Class)+"_"+str(i)+".tiff"),cv2.COLOR_RGB2GRAY)
+		image.append(img)
+		label.append(n_Class-1)
+		
+
+	return image[:], label[:]
+'''
+>>>>>>> 67963418cca3556e0988ac9e4028b68af114f6bd
 def loadimages(path,folder,img_codec):
-    file_path = path+str(folder)+'/*.'+img_codec
-    images = [ cv2.cvtColor(cv2.imread(x),cv2.COLOR_RGB2GRAY)  for x in glob.glob(file_path) ]
-    label = [folder-1]  * len(images) 
-
+    label = []
+    label[:] = []
+    file_path = path+str(folder)+'/*.png'
+    images = [ tf.image.decode_png(x,channels = 1)  for x in glob.glob(file_path) ]
+    label[0:len(images)] = [0] * num_Classes
+    label[0:len(images)][folder-1] = folder-1 
+    #label = [0]  * len(images) 
+    #label[folder-1] = folder-1
 
     return images,label
 
@@ -40,6 +59,8 @@ with tf.Session() as sess:
 		    
 	    # Get a batch of images and labels
 	    x_batch, y_true_batch = loadimages(path,num_Class,'tiff')
+
+	    print(sess.run(tf.shape(x_batch)))
 
 	    # Put the batch into a dict with the proper names for placeholder variables
 	    feed_dict_train = {x: x_batch[0:100], y_true: y_true_batch[0:100]}
