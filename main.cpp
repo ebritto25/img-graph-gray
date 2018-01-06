@@ -5,37 +5,14 @@
 #include "util.cpp"
 
 
-
+void verify_args_number(int argc);
 
 
 int main(int argc, char* argv[])
 {
+	
+    verify_args_number(argc);
 
-    if(argc < 7)
-    {
-        cerr << "Quantidade de argumentos inválida!\n";
-
-        cerr << "Lista de Argumentos:\n"
-             << "1 - Caminho para base de imagens\n" 
-             << "2 - Nome da base\n"
-             << "3 - Quantidade de imagens\n"
-             << "4 - Codec das imagens\n"
-             << "5 - Imagens GRAY ou RGB(0 ou 1)\n"
-             << "6 - Gerar ou nao MST(1 ou 0)\n"
-             << "7 - Destino do arquivo arff(com o nome do arquivo)\n";
-
-
-
-        exit(EXIT_FAILURE);
-    }
-
-    map<string,int> bases;
-
-    bases["brodatz"] = 1;
-    bases["rgbbrodatz"] = 2;
-    bases["ucm"] = 3;
-    bases["rsscn"] = 4;
-    bases["kylberg"] = 5;
 
     string path = argv[1];
     string base_name = argv[2];
@@ -50,12 +27,15 @@ int main(int argc, char* argv[])
 
     if( image_codec.empty() )
     {
-        cout << "Codec da base não informado!\n";
+        cerr << "Codec da base não informado!\n";
         exit(EXIT_FAILURE);
     }
 
+
+    // Carregando todos os nomes das pastas 
     ifstream File;
     File.open(path+"/folders_name.txt");
+
     if(!File.is_open())
     {
         cerr << "Problema ao Abrir Nomes das Pastas" << '\n';
@@ -66,9 +46,18 @@ int main(int argc, char* argv[])
 
     istream_iterator<string> eos;
     istream_iterator<string> input(File);
-    copy_if(input,eos,std::back_inserter(folders_name),[](string a) { return a[0] != '#'; });
+    copy_if(input,eos,std::back_inserter(folders_name),[](string a) { return a[0] != '#'; }); // só carrega nomes que não começam com '#'(comentados)
+    // ---- 
 
     int number_of_folders = folders_name.size(); 
+
+    map<string,int> bases;
+
+    bases["brodatz"] = 1;
+    bases["rgbbrodatz"] = 2;
+    bases["ucm"] = 3;
+    bases["rsscn"] = 4;
+    bases["kylberg"] = 5;
 
     image_base::TYPE base_type;
     if(bases[base_name] ==  bases["brodatz"])
@@ -101,5 +90,27 @@ int main(int argc, char* argv[])
 
     thread_handler(base,folders_name,mst);
 
+
+}
+
+void verify_args_number(int argc)
+{
+    if(argc < 7)
+    {
+        cerr << "Quantidade de argumentos inválida!\n";
+
+        cerr << "Lista de Argumentos:\n"
+             << "1 - Caminho para base de imagens\n" 
+             << "2 - Nome da base\n"
+             << "3 - Quantidade de imagens\n"
+             << "4 - Codec das imagens\n"
+             << "5 - Imagens GRAY ou RGB(0 ou 1)\n"
+             << "6 - Gerar ou nao MST(1 ou 0)\n"
+             << "7 - Destino do arquivo arff(com o nome do arquivo)\n";
+
+
+
+        exit(EXIT_FAILURE);
+    }
 
 }

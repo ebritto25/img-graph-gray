@@ -391,7 +391,6 @@ string atributeGenerator(string arg,image_base& base,bool with_mst)
 
 
 mutex mt;
-
 void extrai_valor(string folder,image_base& base,bool with_mst)
 {
     Mat image = imread(base.get_image_in_folder(folder,base.get_image_base_type(),0));
