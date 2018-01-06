@@ -73,24 +73,15 @@ image_base::COLOR image_base::color() const
     return color_scheme;
 }
 
-template<>
-string image_base::get_image_in_folder(int folder,image_base::TYPE type,int img_number)
-{
-    std::stringstream ret;
-    if(type == image_base::TYPE::RSSCN)
-        ret << path_to_folders << "/" << folder << "/" << char('a'+(folder-1)) << setfill('0') << setw(3) << img_number+1 << image_codec;
-    else if(type == image_base::TYPE::BRODATZ)
-        ret << path_to_folders << "/" << folder << "/output" << folder  << "_" << img_number << image_codec;
 
-
-    return ret.str();
-}
-
-template<>
 string image_base::get_image_in_folder(string folder,image_base::TYPE type,int img_number)
 {
     std::stringstream ret;
-    if(type == image_base::TYPE::UCM)
+    if(type == image_base::TYPE::RSSCN)
+        ret << path_to_folders << "/" << folder << "/" << /*char('a'+(folder-1))*/ "DEBUG"  << setfill('0') << setw(3) << img_number+1 << image_codec;
+    else if(type == image_base::TYPE::BRODATZ)
+        ret << path_to_folders << "/" << folder << "/output" << folder  << "_" << img_number << image_codec;
+    else if(type == image_base::TYPE::UCM)
         ret << path_to_folders << "/" << folder << "/" << folder << setfill('0') << setw(2) << img_number  << image_codec;
     else if(type == image_base::TYPE::KYLBERG)
         ret << path_to_folders << "/" << folder << "/" << folder << "-" << char('a'+(img_number/40)) << "-p" << setfill('0') << setw(3) << (img_number%40) + 1 << image_codec;
@@ -98,10 +89,6 @@ string image_base::get_image_in_folder(string folder,image_base::TYPE type,int i
         ret << path_to_folders << "/" << folder << "/_" << folder << "/" << folder << "." << img_number << image_codec;
 
 
-
-
-
-    std::cout << "DEBUG " << ret.str() << '\n';
     return ret.str();
 }
 

@@ -13,18 +13,6 @@ path = "/home/eduardo/IC/textures/class_1/"
 num_Classes = 13
 num_Img = 100
 
-'''
-def loadimages(path,n_Class,n_Img):
-	image = []
-	label = []
-	for i in range(0,num_Img):
-		img = cv2.cvtColor(cv2.imread(path+"/"+str(n_Class)+"/"+"output"+str(n_Class)+"_"+str(i)+".tiff"),cv2.COLOR_RGB2GRAY)
-		image.append(img)
-		label.append(n_Class-1)
-		
-
-	return image[:], label[:]
-'''
 
 def loadimages(path,folder,img_codec):
     file_path = path+str(folder)+'/*.'+img_codec
