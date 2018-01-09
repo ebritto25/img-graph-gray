@@ -13,9 +13,6 @@ path = "/home/eduardo/IC/textures/class_1/"
 num_Classes = 13
 num_Img = 100
 
-<<<<<<< HEAD
-
-=======
 '''
 def loadimages(path,n_Class,n_Img):
 	image = []
@@ -28,7 +25,7 @@ def loadimages(path,n_Class,n_Img):
 
 	return image[:], label[:]
 '''
->>>>>>> 67963418cca3556e0988ac9e4028b68af114f6bd
+
 def loadimages(path,folder,img_codec):
     label = []
     label[:] = []
