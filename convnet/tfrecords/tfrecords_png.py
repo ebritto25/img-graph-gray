@@ -5,7 +5,7 @@ import sys, re, glob, cv2
 
 
 shuffle_data = True  # shuffle the addresses before saving
-train_path = '/home/rodrigo/textures/class_1/train/*.png'
+train_path = '/home/eduardo/ProjQT/textures/class_1/train/*.png'
 # read addresses and labels from the 'train' folder
 addrs = glob.glob(train_path)
 
@@ -14,11 +14,12 @@ labels = []
 
 # Getting the images labels
 for addr in addrs:
-    addr_processed = addr.split('/')[6]
-    m = re.search('[1-9]',addr_processed.split('_')[0])
+    addr_processed = addr.split('/')[7]
+    m = re.search('[0-9]+',addr_processed.split('_')[0])
 
     labels.append(int(m.group(0)))
-    print(labels)
+
+print(labels)
 
 # to shuffle data
 if shuffle_data:

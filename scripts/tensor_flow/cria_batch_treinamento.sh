@@ -6,7 +6,7 @@
 batch_size=52
 
 # Endereço das classes
-path="/home/rodrigo/textures/"
+path="/home/eduardo/ProjQT/textures/"
 
 # Criando pasta de treinamento
 for i in $(seq 1 5); do 

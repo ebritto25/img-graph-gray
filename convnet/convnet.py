@@ -8,8 +8,8 @@ import os.path
 
 
 num_epochs = 100
-batch_size = 100
-path = "/home/eduardo/IC/textures/class_1/"
+batch_size = 32
+path = '/home/eduardo/ProjQT/img-graph-gray/convnet/tfrecords/train.tfrecords'
 num_Classes = 13
 num_Img = 100
 
@@ -26,6 +26,7 @@ def loadimages(path,n_Class,n_Img):
 	return image[:], label[:]
 '''
 
+'''
 def loadimages(path,folder,img_codec):
     label = []
     label[:] = []
@@ -37,6 +38,26 @@ def loadimages(path,folder,img_codec):
     #label[folder-1] = folder-1
 
     return images,label
+'''
+
+
+def loadimages(recordsPath):
+	record_iterator = tf.python_io.tf_record_iterator(path = recordPath)
+	images = []
+	labels = []
+	for string_record in record_iterator:
+
+		example = tf.train.Example()
+		example.ParseFromString(string_record)
+
+		image_string = (example.features.feature['train/image'].bytes_list.value[0])
+		label = int(example.features.feature['train/label'].int64_list.value[0])
+
+		images.append(image_string)
+		labels.append(label)
+
+	return images, labels
+
 
 
 with tf.Session() as sess:
@@ -46,21 +67,25 @@ with tf.Session() as sess:
     # Add the model graph to TensorBoard
     writer.add_graph(sess.graph)
     
+    images, labels = loadimages(path)
+    num_Img = len(images)
+
     # Loop over number of epochs
-    for epoch in range(num_epochs):
+    for epoch in xrange(num_epochs):
         
         start_time = time.time()
         train_accuracy = 0
         
-        for num_Class in range(1, num_Classes+1):
+        for i in xrange(0, num_Img,batch_size):
 		    
 	    # Get a batch of images and labels
-	    x_batch, y_true_batch = loadimages(path,num_Class,'tiff')
+	    x_batch = [tf.image.decode_image(img) for img in images[i:i+batch_size]]
+	    y_true_batch = labels[i:i+batch_size]
 
 	    print(sess.run(tf.shape(x_batch)))
 
 	    # Put the batch into a dict with the proper names for placeholder variables
-	    feed_dict_train = {x: x_batch[0:100], y_true: y_true_batch[0:100]}
+	    feed_dict_train = {x: x_batch, y_true: y_true_batch}
 	    
 	    # Run the optimizer using this batch of training data.
 	    sess.run(optimizer, feed_dict=feed_dict_train)

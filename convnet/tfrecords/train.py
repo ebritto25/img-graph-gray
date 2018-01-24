@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-filenames = "/home/rodrigo/gdrive/ESTUDOS/faculdade/iniciacao/img-graph-gray/convnet/tfrecords/train.tfrecords"
+filenames = "/home/eduardo/ProjQT/img-graph-gray/convnet/tfrecords/train.tfrecords"
 dataset = tf.data.TFRecordDataset(filenames);
 iterator = dataset.make_initializable_iterator();
 next_element = iterator.get_next();
