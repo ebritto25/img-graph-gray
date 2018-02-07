@@ -20,6 +20,93 @@ template<image_base::COLOR color>
 void define_pixels_destino(igraph_vs_t* to,Mat& image);
 
 
+/*
+ * edges_weights é a nova função ( Não pensei em outro nome ainda )
+ *
+ */
+template<image_base::COLOR color>
+void edges_weights(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight);
+
+
+/*
+ * Criei essa struct por que achei que pode facilitar na hora de usar a formula
+ * mas pode ser que seja desnecessário
+ */
+template<typename T>
+struct pixel_
+{
+    int x;
+    int y;
+    T intensity;
+};
+
+//FUNÇÃO NOVA
+template<>
+void edges_weights<image_base::COLOR::GRAY>(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
+{
+    int cont{0}, pixel{0}, wcont{0};
+
+    int alfa{1};
+    int beta{1};
+    auto formula = [=](pixel_<int> k, pixel_<int> j) { return ( alfa*(abs(int(k.intensity - j.intensity))) - beta*(abs( (k.x - j.x) + (k.y - j.y)))); };
+
+    for(int i = 0; i < img.rows;i++)
+    {
+        for(int j = 0; j < img.cols;j++,pixel++)
+        {
+            pixel_<int> pixel_1{i,j,int(img.at<uchar>(i,j))};
+            pixel_<int> pixel_2{i,j,int(img.at<uchar>(i,j+1))};
+
+            if((i < img.rows - 1) && (j < img.cols - 1))//PIXEL NÃO É BORDA, LIGA A DIREITA E ABAIXO
+            {
+                //LIGA COM O VERTICE DA DIREITA E CALCULA O PESO
+                VECTOR(*edges)[cont] = pixel;
+                VECTOR(*edges)[cont+1] = pixel+1;
+                VECTOR(*weight)[wcont++] = formula(pixel_1,pixel_2);
+
+                pixel_2.y = j;
+                pixel_2.x = i+1;
+
+                //LIGA COM O VERTICE DE BAIXO E CALCULA O PESO
+                VECTOR(*edges)[cont+2] = pixel;
+                VECTOR(*edges)[cont+3] = pixel+(img.cols);
+                VECTOR(*weight)[wcont++] = formula(pixel_1,pixel_2);
+
+
+                //AVANÇA O CONTADOR DO VETOR 2 PARES A FRENTE
+                cont += 4;
+            }
+            else
+            {
+                if((i == (img.rows - 1)) && (j == (img.cols - 1)))//ULTIMO PIXEL, NÃO FAZ NADA
+                    continue;
+
+                if(i == (img.rows - 1))//PIXEL NA BORDA INFERIOR, LIGA SÓ A DIREITA
+                {
+                    VECTOR(*edges)[cont] = pixel;
+                    VECTOR(*edges)[cont+1] = pixel+1;
+                    VECTOR(*weight)[wcont++] = formula(pixel_1,pixel_2);
+                    cont += 2;
+                }
+                else if(j == (img.cols - 1))//PIXEL NA BORDA DIREITA, LIGA SÓ ABAIXO
+                {
+
+                    pixel_2.y = j;
+                    pixel_2.x = i+1;
+
+                    VECTOR(*edges)[cont] = pixel;
+                    VECTOR(*edges)[cont+1] = pixel+(img.cols);
+                    VECTOR(*weight)[wcont++] = formula(pixel_1,pixel_2);
+                    cont += 2;
+                }
+            }
+
+        }
+
+    }
+
+
+}
 
 template<>
 void gera_edges_weights<image_base::COLOR::RGB>(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
@@ -323,8 +410,6 @@ string atributeGenerator(string arg,image_base& base,bool with_mst)
     else
     {
 
-
-
         const int from[] = {0,(image.cols-1),image.cols/2,image.cols*(image.rows/2)};
         igraph_vs_t to[4];
 
@@ -351,7 +436,8 @@ string atributeGenerator(string arg,image_base& base,bool with_mst)
         graph = createGraph(image);
 
 
-        gera_edges_weights<image_base::COLOR::GRAY>(image,&vEdges,&vWeights);
+//        gera_edges_weights<image_base::COLOR::GRAY>(image,&vEdges,&vWeights);
+        edges_weights<image_base::COLOR::GRAY>(image,&vEdges,&vWeights);
         igraph_add_edges(&graph,&vEdges,0);
 
         //CALCULA E IMPRIME MENOR CAMINHO
