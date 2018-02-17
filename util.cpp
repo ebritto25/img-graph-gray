@@ -7,7 +7,7 @@
 #include <thread>
 #include "vectorgraph.hpp"
 
-#define DB(X) std::cerr << #X << '=' << X << '\n';
+#define DB(X) std::cout << #X << '=' << X << '\n';
 
 using namespace cv;
 using namespace std;
@@ -27,7 +27,6 @@ void define_pixels_destino(igraph_vs_t* to,Mat& image);
 template<image_base::COLOR color>
 void edges_weights(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight);
 
-
 /*
  * Criei essa struct por que achei que pode facilitar na hora de usar a formula
  * mas pode ser que seja desnecessário
@@ -40,22 +39,23 @@ struct pixel_
     T intensity;
 };
 
-//FUNÇÃO NOVA
+//FUNÇÃO FORMULA BETA E ALFA
 template<>
 void edges_weights<image_base::COLOR::GRAY>(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
 {
     int cont{0}, pixel{0}, wcont{0};
 
-    int alfa{1};
-    int beta{1};
-    auto formula = [=](pixel_<int> k, pixel_<int> j) { return ( alfa*(abs(int(k.intensity - j.intensity))) - beta*(abs( (k.x - j.x) + (k.y - j.y)))); };
+    float alfa{1.0f}; // PODE MUDAR
+    float beta{0.5f}; // PODE MUDAR
+    auto formula = [alfa,beta](pixel_<float> k, pixel_<float> j) -> float { return abs(alfa*(abs(k.intensity - j.intensity)) - beta*(abs( (k.x - j.x) + (k.y - j.y)))); };
+
 
     for(int i = 0; i < img.rows;i++)
     {
         for(int j = 0; j < img.cols;j++,pixel++)
         {
-            pixel_<int> pixel_1{i,j,int(img.at<uchar>(i,j))};
-            pixel_<int> pixel_2{i,j,int(img.at<uchar>(i,j+1))};
+            pixel_<float> pixel_1{i,j,float(img.at<uchar>(i,j))};
+            pixel_<float> pixel_2{i,j,float(img.at<uchar>(i,j+1))};
 
             if((i < img.rows - 1) && (j < img.cols - 1))//PIXEL NÃO É BORDA, LIGA A DIREITA E ABAIXO
             {
@@ -64,11 +64,28 @@ void edges_weights<image_base::COLOR::GRAY>(Mat &img,igraph_vector_t *edges,igra
                 VECTOR(*edges)[cont+1] = pixel+1;
                 VECTOR(*weight)[wcont++] = formula(pixel_1,pixel_2);
 
-                pixel_2.y = j;
                 pixel_2.x = i+1;
+                pixel_2.y = j;
+
+                pixel_2.intensity = float(img.at<uchar>(i+1,j));
+
 
                 //LIGA COM O VERTICE DE BAIXO E CALCULA O PESO
                 VECTOR(*edges)[cont+2] = pixel;
+
+                if ( formula(pixel_1,pixel_2) < 0)
+                {
+                    DB(pixel_1.x);
+                    DB(pixel_1.y);
+                    DB(pixel_1.intensity);
+                    DB(pixel_2.x);
+                    DB(pixel_2.y);
+                    DB(pixel_2.intensity);
+                    std::cerr << "BAIXO\n";
+                    DB(formula(pixel_1,pixel_2));
+                    std::cin.get();
+                }
+
                 VECTOR(*edges)[cont+3] = pixel+(img.cols);
                 VECTOR(*weight)[wcont++] = formula(pixel_1,pixel_2);
 
@@ -91,8 +108,9 @@ void edges_weights<image_base::COLOR::GRAY>(Mat &img,igraph_vector_t *edges,igra
                 else if(j == (img.cols - 1))//PIXEL NA BORDA DIREITA, LIGA SÓ ABAIXO
                 {
 
-                    pixel_2.y = j;
                     pixel_2.x = i+1;
+                    pixel_2.y = j;
+                    pixel_2.intensity = float(img.at<uchar>(i+1,j));
 
                     VECTOR(*edges)[cont] = pixel;
                     VECTOR(*edges)[cont+1] = pixel+(img.cols);
@@ -436,7 +454,7 @@ string atributeGenerator(string arg,image_base& base,bool with_mst)
         graph = createGraph(image);
 
 
-//        gera_edges_weights<image_base::COLOR::GRAY>(image,&vEdges,&vWeights);
+        //gera_edges_weights<image_base::COLOR::GRAY>(image,&vEdges,&vWeights);
         edges_weights<image_base::COLOR::GRAY>(image,&vEdges,&vWeights);
         igraph_add_edges(&graph,&vEdges,0);
 

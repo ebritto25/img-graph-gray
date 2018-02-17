@@ -18,9 +18,9 @@ int main(int argc, char* argv[])
     string base_name = argv[2];
     int number_of_images = std::stoi(argv[3]);
     string image_codec = argv[4];
-    bool gray = std::stoi(argv[5]);
+    bool rgb = std::stoi(argv[5]);
     bool mst = std::stoi(argv[6]);
-    string arff_file = argv[7]; 
+    string arff_file = argv[7];
 
 
 
@@ -41,6 +41,7 @@ int main(int argc, char* argv[])
         cerr << "Problema ao Abrir Nomes das Pastas" << '\n';
         exit(EXIT_FAILURE);
     }
+
 
     vector<string> folders_name;
 
@@ -72,13 +73,17 @@ int main(int argc, char* argv[])
         base_type = image_base::TYPE::KYLBERG;
 
     image_base::COLOR color;
-    if(gray)
+    if(!rgb)
         color = image_base::COLOR::GRAY;
     else 
         color = image_base::COLOR::RGB;
 
     image_base base{image_codec,path,number_of_folders,number_of_images,
                         base_type,color};
+
+
+
+
 
 
     if(!base.create_arff_file(arff_file))
@@ -104,7 +109,7 @@ void verify_args_number(int argc)
              << "2 - Nome da base\n"
              << "3 - Quantidade de imagens\n"
              << "4 - Codec das imagens\n"
-             << "5 - Imagens GRAY ou RGB(0 ou 1)\n"
+             << "5 - Imagens GRAY ou RGB(RGB == 1 | GRAY = 0)\n"
              << "6 - Gerar ou nao MST(1 ou 0)\n"
              << "7 - Destino do arquivo arff(com o nome do arquivo)\n";
 
