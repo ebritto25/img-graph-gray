@@ -1,10 +1,11 @@
 #include <opencv2/opencv.hpp>
-#include "image_base.h"
 #include <mutex>
 #include <array>
 #include <iostream>
 #include <functional>
 #include <thread>
+#include "image_base.cpp"
+#include "boost_utils.cpp"
 #include "vectorgraph.hpp"
 
 #define DB(X) std::cout << #X << '=' << X << '\n';
@@ -12,11 +13,11 @@
 using namespace cv;
 using namespace std;
 
-template<image_base::COLOR color>
+template<COLOR color>
 void gera_edges_weights(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight);
 
 // define os pixels de partida para o algoritmo dijkstra
-template<image_base::COLOR color>
+template<COLOR color>
 void define_pixels_destino(igraph_vs_t* to,Mat& image);
 
 
@@ -24,7 +25,7 @@ void define_pixels_destino(igraph_vs_t* to,Mat& image);
  * edges_weights é a nova função ( Não pensei em outro nome ainda )
  *
  */
-template<image_base::COLOR color>
+template<COLOR color>
 void edges_weights(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight);
 
 /*
@@ -41,7 +42,7 @@ struct pixel_
 
 //FUNÇÃO FORMULA BETA E ALFA
 template<>
-void edges_weights<image_base::COLOR::GRAY>(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
+void edges_weights<COLOR::GRAY>(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
 {
     int cont{0}, pixel{0}, wcont{0};
 
@@ -127,7 +128,7 @@ void edges_weights<image_base::COLOR::GRAY>(Mat &img,igraph_vector_t *edges,igra
 }
 
 template<>
-void gera_edges_weights<image_base::COLOR::RGB>(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
+void gera_edges_weights<COLOR::RGB>(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
 {
     int cont = 0,pixel = 0,wcont = 0;
     Vec3b intensity1,intensity2;
@@ -193,7 +194,7 @@ void gera_edges_weights<image_base::COLOR::RGB>(Mat &img,igraph_vector_t *edges,
 }
 
 template<>
-void gera_edges_weights<image_base::COLOR::GRAY>(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
+void gera_edges_weights<COLOR::GRAY>(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
 {
     int cont = 0,pixel = 0,wcont = 0;
 
@@ -269,7 +270,7 @@ igraph_t createGraph(Mat &imagem)
 
 
 template<>
-void define_pixels_destino<image_base::COLOR::GRAY>(igraph_vs_t* to,Mat& image)
+void define_pixels_destino<COLOR::GRAY>(igraph_vs_t* to,Mat& image)
 {
 
     const int ultimo_pixel_1  = (image.cols*image.rows) -1;
@@ -286,7 +287,7 @@ void define_pixels_destino<image_base::COLOR::GRAY>(igraph_vs_t* to,Mat& image)
 }
 
 template<>
-void define_pixels_destino<image_base::COLOR::RGB>(igraph_vs_t* to,Mat& image)
+void define_pixels_destino<COLOR::RGB>(igraph_vs_t* to,Mat& image)
 {
     const int ultimo_pixel = (  (image.cols*image.rows)-1)+(image.cols*image.rows*2) ;
     const int primeiro_pixel_ultima = ((image.cols*image.rows)-image.cols)+(image.cols*image.rows*2);
@@ -311,7 +312,8 @@ void define_pixels_destino<image_base::COLOR::RGB>(igraph_vs_t* to,Mat& image)
 
     //segunda camada
     igraph_vs_1(&to[8],(ultimo_pixel_1+(image.cols*image.rows))); // ultimo pixel
-    igraph_vs_1(&to[9],( primeiro_pixel_ultima_1+(image.cols*image.rows))); //primeiro pixel ultima linha
+c,path,number_of_folders,number_of_images,                                          | 25 }
+ 32                         base_type,color};                igraph_vs_1(&to[9],( primeiro_pixel_ultima_1+(image.cols*image.rows))); //primeiro pixel ultima linha
     igraph_vs_1(&to[10],(meio_vertical_1)+(image.cols*image.rows));
     igraph_vs_1(&to[11],(meio_horizontal_1)+(image.cols*image.rows));
 
@@ -360,7 +362,7 @@ string atributeGenerator(string arg,image_base& base,bool with_mst)
     igraph_vector_ptr_t vPath,ePath;
     Mat image = imread(arg);
 
-    if(base.color() == image_base::COLOR::RGB)
+    if(base.color == COLOR::RGB)
     {
 
         igraph_vs_t to[16];
@@ -370,7 +372,7 @@ string atributeGenerator(string arg,image_base& base,bool with_mst)
               image.cols*image.rows,(image.cols-1)+(image.cols*image.rows),(image.cols/2)+(image.cols*image.rows),image.cols*(image.rows/2)+(image.cols*image.rows),
               image.cols*image.rows*2,(image.cols-1)+(image.cols*image.rows*2),(image.cols/2)+(image.cols*image.rows*2),image.cols*(image.rows/2)+(image.cols*image.rows*2)};
 
-        define_pixels_destino<image_base::COLOR::RGB>(to,image);
+        define_pixels_destino<COLOR::RGB>(to,image);
 
         //INICIALIZAÇÃO DE VETORES
         VectorGraph vEdges((2*((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols))));
@@ -392,7 +394,7 @@ string atributeGenerator(string arg,image_base& base,bool with_mst)
 
         graph = createGraph(image);
 
-        gera_edges_weights<image_base::COLOR::RGB>(image,&vEdges,&vWeights);
+        gera_edges_weights<COLOR::RGB>(image,&vEdges,&vWeights);
 
         igraph_add_edges(&graph,&vEdges,0);
 
@@ -431,7 +433,7 @@ string atributeGenerator(string arg,image_base& base,bool with_mst)
         const int from[] = {0,(image.cols-1),image.cols/2,image.cols*(image.rows/2)};
         igraph_vs_t to[4];
 
-        define_pixels_destino<image_base::COLOR::GRAY>(to,image);
+        define_pixels_destino<COLOR::GRAY>(to,image);
 
         cvtColor(image,image,COLOR_RGB2GRAY);
 
@@ -455,7 +457,7 @@ string atributeGenerator(string arg,image_base& base,bool with_mst)
 
 
         //gera_edges_weights<image_base::COLOR::GRAY>(image,&vEdges,&vWeights);
-        edges_weights<image_base::COLOR::GRAY>(image,&vEdges,&vWeights);
+        edges_weights<COLOR::GRAY>(image,&vEdges,&vWeights);
         igraph_add_edges(&graph,&vEdges,0);
 
         //CALCULA E IMPRIME MENOR CAMINHO
@@ -497,17 +499,16 @@ string atributeGenerator(string arg,image_base& base,bool with_mst)
 mutex mt;
 void extrai_valor(string folder,image_base& base,bool with_mst)
 {
-    Mat image = imread(base.get_image_in_folder(folder,base.get_image_base_type(),0));
-
 
     stringstream values;
 
-    for(int i = 0; i < base.images(); i++)
-    {
-        std::cerr << "Thread: " << folder << "\nImagem: " << i << " de " << base.images() << '\n';
-        string img_str  = base.get_image_in_folder(folder,base.get_image_base_type(),i);
+    vector<string> images_path = get_images_in_class(bsf::path(base.path+folder)); 
 
-        string temp = atributeGenerator(img_str,base,with_mst);
+    for(int i = 0; i < images_path.size(); i++)
+    {
+        std::cout << "Thread: " << folder << "\nImagem: " << i << " de " << base.images() << '\n';
+
+        string temp = atributeGenerator(images_path[i],base,with_mst);
         temp += "class_"+folder+"\n";
 
         values << temp;
@@ -520,14 +521,16 @@ void extrai_valor(string folder,image_base& base,bool with_mst)
 }
 
 
-void thread_handler(image_base& base,std::vector<string> folders,bool with_mst)
+void thread_handler(image_base& base,bool with_mst)
 {
     std::vector<thread> threads;
+    
+    std::vector<std::string> folders_name = get_classes_name( bsf::path(base.path) );
 
-    threads.reserve(base.folders());
+    threads.reserve(folders_name.size());
 
     for(int i = 0; i < base.folders(); i++)
-        threads.emplace_back(extrai_valor,folders[i],std::ref(base),with_mst);
+        threads.emplace_back(extrai_valor,folders_name[i],std::ref(base),with_mst);
 
 
     for(int i = 0; i < base.folders(); i++)
