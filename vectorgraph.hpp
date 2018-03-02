@@ -1,7 +1,7 @@
 #ifndef VECTORGRAH_H
 #define VECTORGRAH_H
 
-#include <igraph.h>
+#include <igraph/igraph.h>
 
 class VectorGraph
 {

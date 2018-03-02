@@ -312,8 +312,7 @@ void define_pixels_destino<COLOR::RGB>(igraph_vs_t* to,Mat& image)
 
     //segunda camada
     igraph_vs_1(&to[8],(ultimo_pixel_1+(image.cols*image.rows))); // ultimo pixel
-c,path,number_of_folders,number_of_images,                                          | 25 }
- 32                         base_type,color};                igraph_vs_1(&to[9],( primeiro_pixel_ultima_1+(image.cols*image.rows))); //primeiro pixel ultima linha
+   igraph_vs_1(&to[9],( primeiro_pixel_ultima_1+(image.cols*image.rows))); //primeiro pixel ultima linha
     igraph_vs_1(&to[10],(meio_vertical_1)+(image.cols*image.rows));
     igraph_vs_1(&to[11],(meio_horizontal_1)+(image.cols*image.rows));
 
@@ -362,7 +361,7 @@ string atributeGenerator(string arg,image_base& base,bool with_mst)
     igraph_vector_ptr_t vPath,ePath;
     Mat image = imread(arg);
 
-    if(base.color == COLOR::RGB)
+    if(base.image_color == COLOR::RGB)
     {
 
         igraph_vs_t to[16];
@@ -506,7 +505,7 @@ void extrai_valor(string folder,image_base& base,bool with_mst)
 
     for(int i = 0; i < images_path.size(); i++)
     {
-        std::cout << "Thread: " << folder << "\nImagem: " << i << " de " << base.images() << '\n';
+        std::cout << "Thread: " << folder << "\nImagem: " << i << " de " << images_path.size() << '\n';
 
         string temp = atributeGenerator(images_path[i],base,with_mst);
         temp += "class_"+folder+"\n";
@@ -515,7 +514,7 @@ void extrai_valor(string folder,image_base& base,bool with_mst)
     }
 
     mt.lock();
-    base.put_in_arff_file(values.str());
+    base.arff_file << values.str();
     mt.unlock();
 
 }
@@ -529,10 +528,10 @@ void thread_handler(image_base& base,bool with_mst)
 
     threads.reserve(folders_name.size());
 
-    for(int i = 0; i < base.folders(); i++)
+    for(int i = 0; i < folders_name.size(); i++)
         threads.emplace_back(extrai_valor,folders_name[i],std::ref(base),with_mst);
 
 
-    for(int i = 0; i < base.folders(); i++)
+    for(int i = 0; i < folders_name.size(); i++)
         threads[i].join();
 }

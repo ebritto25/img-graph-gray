@@ -29,7 +29,7 @@ std::string get_base_name(const bsf::path & base_path)
     if( !bsf::exists(base_path) )
     {
        std::cout << "Error getting to the base name!\n";
-       return std::vector<std::string>();
+       return std::string();
     }
 
     return base_path.filename().string();

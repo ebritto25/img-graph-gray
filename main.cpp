@@ -18,13 +18,15 @@ int main(int argc, char* argv[])
     bool mst = std::stoi(argv[6]);
     string arff_file_path = argv[7];
 
-    base.path = folders_path;
 
     image_base base;
+
+    base.path = folders_path;
+
     if(!rgb)
-        base.color = COLOR::GRAY;    
+        base.image_color = COLOR::GRAY;
     else 
-        base.color = COLOR::RGB;    
+        base.image_color = COLOR::RGB;
 
 
     base.arff_file.open(arff_file_path);
@@ -52,7 +54,7 @@ void verify_args_number(int argc)
              << "3 - Gerar ou nao MST(1 ou 0)\n"
              << "4 - Destino do arquivo arff(com o nome do arquivo)\n";
    
-        return 1;
+        exit(EXIT_SUCCESS);
     }
 
 }
