@@ -23,14 +23,13 @@ void define_pixels_destino(igraph_vs_t* to,Mat& image);
 
 /*
  * edges_weights é a nova função ( Não pensei em outro nome ainda )
- *
  */
 template<COLOR color>
 void edges_weights(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight);
 
 /*
  * Criei essa struct por que achei que pode facilitar na hora de usar a formula
- * mas pode ser que seja desnecessário
+ * mas pode ser que seja desnecessária
  */
 template<typename T>
 struct pixel_
@@ -73,7 +72,8 @@ void edges_weights<COLOR::GRAY>(Mat &img,igraph_vector_t *edges,igraph_vector_t 
 
                 //LIGA COM O VERTICE DE BAIXO E CALCULA O PESO
                 VECTOR(*edges)[cont+2] = pixel;
-
+                
+                // DEBUG ****
                 if ( formula(pixel_1,pixel_2) < 0)
                 {
                     DB(pixel_1.x);
@@ -199,7 +199,7 @@ void gera_edges_weights<COLOR::GRAY>(Mat &img,igraph_vector_t *edges,igraph_vect
     int cont = 0,pixel = 0,wcont = 0;
 
 
-    for(int i = 0;i < img.rows;i++)
+    for(int i = 0; i < img.rows;i++)
     {
         for(int j = 0;j < img.cols;j++,pixel++)
         {
@@ -330,16 +330,15 @@ void avgVector(igraph_vector_t *edges,igraph_vector_t *weights, igraph_vector_t 
     igraph_real_t sum = 0,des = 0;
     const int size = igraph_vector_size(edges);
 
-    for(int i = 0;i < size;i++)
+    for(int i = 0; i < size;i++)
     {
         sum += (igraph_real_t)VECTOR(*weights)[(int)VECTOR(*edges)[i]];
     }
 
     sum /= size;
-
     igraph_vector_push_back(res,sum);
 
-    for(int i = 0;i < size;i++)
+    for(int i = 0; i < size;i++)
     {
         igraph_real_t temp = ((igraph_real_t)VECTOR(*weights)[(int)VECTOR(*edges)[i]])-sum ;
         des += temp * temp; 
@@ -359,7 +358,9 @@ string atributeGenerator(string arg,image_base& base,bool with_mst)
 
 
     igraph_vector_ptr_t vPath,ePath;
+    std::cerr << "IMAGEM: " << arg << '\n';
     Mat image = imread(arg);
+
 
     if(base.image_color == COLOR::RGB)
     {
@@ -398,7 +399,7 @@ string atributeGenerator(string arg,image_base& base,bool with_mst)
         igraph_add_edges(&graph,&vEdges,0);
 
         //CALCULA E IMPRIME MENOR CAMINHO
-        for(int i = 0;i < 16;i++)
+        for(int i = 0; i < 16;i++)
         {
             igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from[i],to[i],&vWeights,IGRAPH_ALL,NULL,NULL);
             avgVector((igraph_vector_t*)VECTOR(ePath)[0],&vWeights,&res);
@@ -501,11 +502,12 @@ void extrai_valor(string folder,image_base& base,bool with_mst)
 
     stringstream values;
 
-    vector<string> images_path = get_images_in_class(bsf::path(base.path+folder)); 
+    vector<string> images_path = get_images_in_class(bsf::path(base.path+'/'+folder));
 
     for(int i = 0; i < images_path.size(); i++)
     {
         std::cout << "Thread: " << folder << "\nImagem: " << i << " de " << images_path.size() << '\n';
+        std::cout << "Caminho Imagem: " << images_path[i] << '\n';
 
         string temp = atributeGenerator(images_path[i],base,with_mst);
         temp += "class_"+folder+"\n";

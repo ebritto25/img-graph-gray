@@ -1,5 +1,5 @@
 #include <boost/filesystem.hpp>
-#include <iostream>
+#include <iostream> // REMOVER LINHAS COM "DEBUG"
 #include <vector>
 
 
@@ -28,9 +28,11 @@ std::string get_base_name(const bsf::path & base_path)
 {
     if( !bsf::exists(base_path) )
     {
-       std::cout << "Error getting to the base name!\n";
+       std::cout << "Error getting to the base path!\n";
        return std::string();
     }
+    
+    std::cerr << base_path.filename().string() << '\n'; // DEBUG
 
     return base_path.filename().string();
 
@@ -38,7 +40,6 @@ std::string get_base_name(const bsf::path & base_path)
 
 std::vector<std::string> get_images_in_class(const bsf::path & class_path)
 {    
-
     if( !bsf::exists(class_path) )
     {
        std::cout << "Error getting to the images path!\n";
