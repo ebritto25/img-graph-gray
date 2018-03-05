@@ -37,6 +37,8 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    base.init_arff_file(mst,rgb);
+
     thread_handler(base,mst);
 
 

@@ -20,7 +20,6 @@ void gera_edges_weights(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
 template<COLOR color>
 void define_pixels_destino(igraph_vs_t* to,Mat& image);
 
-
 /*
  * edges_weights é a nova função ( Não pensei em outro nome ainda )
  */
@@ -243,7 +242,7 @@ void gera_edges_weights<COLOR::GRAY>(Mat &img,igraph_vector_t *edges,igraph_vect
 
 
 // gera uma string contendo os valores de média e desvio padrão do vetor(v)
-string gera_str_arff(igraph_vector_t *v)
+string str_arff(igraph_vector_t *v)
 {
   long l = igraph_vector_size(v);
 
@@ -412,7 +411,7 @@ string atributeGenerator(string arg,image_base& base,bool with_mst)
             avgVector(&edges_mst,&vWeights,&res);
         }
 
-        str_res = gera_str_arff(&res);
+        str_res = str_arff(&res);
         cout << '\n';
 
 
@@ -474,9 +473,8 @@ string atributeGenerator(string arg,image_base& base,bool with_mst)
             avgVector(&edges_mst,&vWeights,&res);
         }
 
-        str_res = gera_str_arff(&res);
-
-
+        str_res = str_arff(&res);
+        cout << '\n';
 
 
         //DESTRUIÇÃO DOS ELEMENTOS
@@ -527,6 +525,9 @@ void thread_handler(image_base& base,bool with_mst)
     std::vector<thread> threads;
     
     std::vector<std::string> folders_name = get_classes_name( bsf::path(base.path) );
+
+    base.put_classes_in_arff(folders_name);
+
 
     threads.reserve(folders_name.size());
 

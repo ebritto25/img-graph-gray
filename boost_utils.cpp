@@ -24,19 +24,6 @@ std::vector<std::string> get_classes_name(const bsf::path & base_path)
    return classes_name;
 }
 
-std::string get_base_name(const bsf::path & base_path)
-{
-    if( !bsf::exists(base_path) )
-    {
-       std::cout << "Error getting to the base path!\n";
-       return std::string();
-    }
-    
-    std::cerr << base_path.filename().string() << '\n'; // DEBUG
-
-    return base_path.filename().string();
-
-}
 
 std::vector<std::string> get_images_in_class(const bsf::path & class_path)
 {    
