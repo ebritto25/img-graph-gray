@@ -29,8 +29,10 @@ struct image_base
            if( (i+1) < classes_name.size())
                arff_file << classes_name[i] << ',';
            else
-               arff_file << classes_name[i] << '}';
+               arff_file << classes_name[i] << "}\n";
         }
+
+        arff_file << "@DATA\n";
     }
 
     std::string path;
