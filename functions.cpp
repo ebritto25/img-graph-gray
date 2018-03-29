@@ -536,7 +536,7 @@ void thread_handler(image_base& base,bool with_mst)
         for(; i < 8 && i < folders_name.size(); i++)
             threads.emplace_back(extrai_valor,folders_name[i],std::ref(base),with_mst);
 
-        for(int i = 0; i < 8; i++)
+        for(int i = 0; i < 8 && folders_name.size(); i++)
             threads[i].join();
 
     }
