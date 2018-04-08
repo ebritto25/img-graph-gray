@@ -1,6 +1,6 @@
 #include <opencv2/opencv.hpp>
 #include <mutex>
-#include <array>
+#include <queue>
 #include <iostream>
 #include <functional>
 #include <thread>
@@ -528,22 +528,15 @@ void thread_handler(image_base& base,bool with_mst)
 
     base.put_classes_in_arff(folders_name);
 
-
     threads.reserve(folders_name.size());
 
     for(int i = 0; i < folders_name.size(); i++)
-    {
-        int nthread = 7;
-        while(nthread-- && i < folders_name.size())
-        {
             threads.emplace_back(extrai_valor,folders_name[i],std::ref(base),with_mst);
-            i++;
-        }
 
-        for(auto thread : threads)
-            thread.join();
 
-    }
+    for(int i = 0; i < folders_name.size(); i++)
+        threads[i].join();
+
 
 
 }
