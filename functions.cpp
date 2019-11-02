@@ -8,7 +8,8 @@
 #include "boost_utils.cpp"
 #include "vectorgraph.hpp"
 
-#define DB(X) std::cout << #X << '=' << X << '\n';
+#define DB(X) std::cout << #X << '=' << X << '\n'
+#define LIGA_8_CAMADA
 
 using namespace cv;
 using namespace std;
@@ -20,11 +21,8 @@ void generate_edges_weights(Mat &img,igraph_vector_t *edges,igraph_vector_t *wei
 template<COLOR color>
 void destination_pixels(igraph_vs_t* to,Mat& image);
 
-/*
- * edges_weights é a nova função ( Não pensei em outro nome ainda )
- */
 template<COLOR color>
-void edges_weights(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight);
+string atribute_generator(Mat &image, bool with_mst, bool do_dijkstra=true);
 
 /*
  * Criei essa struct por que achei que pode facilitar na hora de usar a formula
@@ -38,94 +36,6 @@ struct pixel_
     T intensity;
 };
 
-//FUNÇÃO FORMULA BETA E ALFA
-template<>
-void edges_weights<COLOR::GRAY>(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
-{
-    int cont{0}, pixel{0}, wcont{0};
-
-    float alfa{1.0f}; // PODE MUDAR
-    float beta{0.5f}; // PODE MUDAR
-    auto formula = [alfa,beta](pixel_<float> k, pixel_<float> j) -> float { return abs(alfa*(abs(k.intensity - j.intensity)) - beta*(abs( (k.x - j.x) + (k.y - j.y)))); };
-
-
-    for(int i = 0; i < img.rows;i++)
-    {
-        for(int j = 0; j < img.cols;j++,pixel++)
-        {
-            pixel_<float> pixel_1{i,j,float(img.at<uchar>(i,j))};
-            pixel_<float> pixel_2{i,j,float(img.at<uchar>(i,j+1))};
-
-            if((i < img.rows - 1) && (j < img.cols - 1))//PIXEL NÃO É BORDA, LIGA A DIREITA E ABAIXO
-            {
-                //LIGA COM O VERTICE DA DIREITA E CALCULA O PESO
-                VECTOR(*edges)[cont] = pixel;
-                VECTOR(*edges)[cont+1] = pixel+1;
-                VECTOR(*weight)[wcont++] = formula(pixel_1,pixel_2);
-
-                pixel_2.x = i+1;
-                pixel_2.y = j;
-
-                pixel_2.intensity = float(img.at<uchar>(i+1,j));
-
-
-                //LIGA COM O VERTICE DE BAIXO E CALCULA O PESO
-                VECTOR(*edges)[cont+2] = pixel;
-                
-                // DEBUG ****
-                if ( formula(pixel_1,pixel_2) < 0)
-                {
-                    DB(pixel_1.x);
-                    DB(pixel_1.y);
-                    DB(pixel_1.intensity);
-                    DB(pixel_2.x);
-                    DB(pixel_2.y);
-                    DB(pixel_2.intensity);
-                    std::cerr << "BAIXO\n";
-                    DB(formula(pixel_1,pixel_2));
-                    std::cin.get();
-                }
-
-                VECTOR(*edges)[cont+3] = pixel+(img.cols);
-                VECTOR(*weight)[wcont++] = formula(pixel_1,pixel_2);
-
-
-                //AVANÇA O CONTADOR DO VETOR 2 PARES A FRENTE
-                cont += 4;
-            }
-            else
-            {
-                if((i == (img.rows - 1)) && (j == (img.cols - 1)))//ULTIMO PIXEL, NÃO FAZ NADA
-                    continue;
-
-                if(i == (img.rows - 1))//PIXEL NA BORDA INFERIOR, LIGA SÓ A DIREITA
-                {
-                    VECTOR(*edges)[cont] = pixel;
-                    VECTOR(*edges)[cont+1] = pixel+1;
-                    VECTOR(*weight)[wcont++] = formula(pixel_1,pixel_2);
-                    cont += 2;
-                }
-                else if(j == (img.cols - 1))//PIXEL NA BORDA DIREITA, LIGA SÓ ABAIXO
-                {
-
-                    pixel_2.x = i+1;
-                    pixel_2.y = j;
-                    pixel_2.intensity = float(img.at<uchar>(i+1,j));
-
-                    VECTOR(*edges)[cont] = pixel;
-                    VECTOR(*edges)[cont+1] = pixel+(img.cols);
-                    VECTOR(*weight)[wcont++] = formula(pixel_1,pixel_2);
-                    cont += 2;
-                }
-            }
-
-        }
-
-    }
-
-
-}
-
 template<>
 void generate_edges_weights<COLOR::RGB>(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
 {
@@ -138,29 +48,65 @@ void generate_edges_weights<COLOR::RGB>(Mat &img,igraph_vector_t *edges,igraph_v
         {
             for(int j = 0;j < img.cols;j++,pixel++)
             {
+                intensity1 = img.at<Vec3b>(i,j);
+
                 if(camada < 2)
                 {
-                    intensity1 = img.at<Vec3b>(i,j);
                     VECTOR(*edges)[cont++] = pixel;
                     VECTOR(*edges)[cont++] = pixel+(img.cols*img.rows);
                     intensity2 = intensity1;
-                    VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada+1]));
                 }
                 if((i < img.rows - 1) && (j < img.cols - 1))//PIXEL NÃO É BORDA, LIGA A DIREITA E ABAIXO
                 {
 
+                    #ifdef LIGA_8_CAMADA // Faz ligação com os oito de cima
+                        intensity1 = img.at<Vec3b>(i,j);
+                        VECTOR(*edges)[cont++] = pixel;
+                        VECTOR(*edges)[cont++] = pixel+(img.cols*img.rows)+1;
+                        intensity2 = img.at<Vec3b>(i,j+1);
+                        VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada+1]));
+                        if(j > 0)
+                        {
+                            VECTOR(*edges)[cont++] = pixel;
+                            VECTOR(*edges)[cont++] = pixel+(img.cols*img.rows)+(img.cols)-1;
+                            intensity2 = img.at<Vec3b>(i+1,j-1);
+                            VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada+1]));
+                        }
+                        VECTOR(*edges)[cont++] = pixel;
+                        VECTOR(*edges)[cont++] = pixel+(img.cols*img.rows)+(img.cols);
+                        intensity2 = img.at<Vec3b>(i+1,j);
+                        VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada+1]));
+
+
+                        VECTOR(*edges)[cont++] = pixel;
+                        VECTOR(*edges)[cont++] = pixel+(img.cols*img.rows)+(img.cols)+1;
+                        intensity2 = img.at<Vec3b>(i+1,j+1);
+                        VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada+1]));
+                    #endif
+
                     //LIGA COM O VERTICE DA DIREITA E CALCULA O PESO
                     VECTOR(*edges)[cont++] = pixel;
                     VECTOR(*edges)[cont++] = pixel+1;
-                    intensity1 = img.at<Vec3b>(i,j);
                     intensity2 = img.at<Vec3b>(i,j + 1);
                     VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada]));
+                    if(j > 0)// NAO FOR BORDA ESQUERDA
+                    {
+                        //LIGA COM O PIXEL DA DIAGONAL ESQUERDA INFERIOR E CALCULA O PESO
+                        VECTOR(*edges)[cont++] = pixel;
+                        VECTOR(*edges)[cont++] = pixel+(img.cols)-1;
+                        intensity2 = img.at<Vec3b>(i+1,j-1);
+                        VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada]));
+                    }
                     //LIGA COM O VERTICE DE BAIXO E CALCULA O PESO
                     VECTOR(*edges)[cont++] = pixel;
                     VECTOR(*edges)[cont++] = pixel+(img.cols);
                     intensity2 = img.at<Vec3b>(i+1,j);
                     VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada]));
-                    //AVANÇA O CONTADOR DO VETOR 2 PARES A FRENTE
+                    //LIGA COM O PIXEL DA DIAGONAL DIREITA INFERIOR E CALCULA O PESO
+                    VECTOR(*edges)[cont++] = pixel;
+                    VECTOR(*edges)[cont++] = pixel+(img.cols)+1;
+                    intensity2 = img.at<Vec3b>(i+1,j+1);
+                    VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada]));
 
                 }
                 else
@@ -170,17 +116,39 @@ void generate_edges_weights<COLOR::RGB>(Mat &img,igraph_vector_t *edges,igraph_v
 
                     if(i == (img.rows - 1))//PIXEL NA BORDA INFERIOR, LIGA SÓ A DIREITA
                     {
+                        #ifdef LIGA_8_CAMADA
+                            VECTOR(*edges)[cont++] = pixel;
+                            VECTOR(*edges)[cont++] = pixel+(img.cols*img.rows)+1;
+                            intensity2 = img.at<Vec3b>(i,j+1);
+                            VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada+1]));
+                        #endif
+
                         VECTOR(*edges)[cont++] = pixel;
                         VECTOR(*edges)[cont++] = pixel+1;
-                        intensity1 = img.at<Vec3b>(i,j);
                         intensity2 = img.at<Vec3b>(i,j + 1);
                         VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada]));
                     }
-                    else if(j == (img.cols - 1))//PIXEL NA BORDA DIREITA, LIGA SÓ ABAIXO
+                    else if(j == (img.cols - 1))
                     {
+                        #ifdef LIGA_8_CAMADA
+                            VECTOR(*edges)[cont++] = pixel;
+                            VECTOR(*edges)[cont++] = pixel+(img.cols*img.rows)+(img.cols)-1;
+                            intensity2 = img.at<Vec3b>(i+1,j-1);
+                            VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada+1]));
+
+                            VECTOR(*edges)[cont++] = pixel;
+                            VECTOR(*edges)[cont++] = pixel+(img.cols*img.rows)+(img.cols);
+                            intensity2 = img.at<Vec3b>(i+1,j);
+                            VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada+1]));
+                        #endif
+                        // LIGA NA DIAGONAL INFERIOR ESQUERDA
+                        VECTOR(*edges)[cont++] = pixel;
+                        VECTOR(*edges)[cont++] = pixel+(img.cols)-1;
+                        intensity2 = img.at<Vec3b>(i+1,j-1);
+                        VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada]));
+                        //PIXEL NA BORDA DIREITA, LIGA ABAIXO
                         VECTOR(*edges)[cont++] = pixel;
                         VECTOR(*edges)[cont++] = pixel+(img.cols);
-                        intensity1 = img.at<Vec3b>(i,j);
                         intensity2 = img.at<Vec3b>(i+1,j);
                         VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada]));
                     }
@@ -197,23 +165,33 @@ void generate_edges_weights<COLOR::GRAY>(Mat &img,igraph_vector_t *edges,igraph_
 {
     int cont = 0,pixel = 0,wcont = 0;
 
-
     for(int i = 0; i < img.rows;i++)
     {
         for(int j = 0;j < img.cols;j++,pixel++)
         {
-            if((i < img.rows - 1) && (j < img.cols - 1))//PIXEL NÃO É BORDA, LIGA A DIREITA E ABAIXO
+
+            if((i < img.rows - 1) && (j < img.cols - 1))//PIXEL NÃO É BORDA, LIGA A DIREITA E ABAIXO E DIAGONAIS
             {
                 //LIGA COM O VERTICE DA DIREITA E CALCULA O PESO
-                VECTOR(*edges)[cont] = pixel;
-                VECTOR(*edges)[cont+1] = pixel+1;
+                VECTOR(*edges)[cont++] = pixel;
+                VECTOR(*edges)[cont++] = pixel+1;
                 VECTOR(*weight)[wcont++] = abs(((int)img.at<uchar>(i,j) - (int)img.at<uchar>(i,j + 1)));
+                if(j > 0)
+                {
+                    //LIGA COM A DIAGONAL INFERIOR ESQUERDA E CALCULA O PESO
+                    VECTOR(*edges)[cont++] = pixel;
+                    VECTOR(*edges)[cont++] = pixel+(img.cols)-1;
+                    VECTOR(*weight)[wcont++] = abs(((int)img.at<uchar>(i,j) - (int)img.at<uchar>(i+1,j-1)));
+                }
                 //LIGA COM O VERTICE DE BAIXO E CALCULA O PESO
-                VECTOR(*edges)[cont+2] = pixel;
-                VECTOR(*edges)[cont+3] = pixel+(img.cols);
+                VECTOR(*edges)[cont++] = pixel;
+                VECTOR(*edges)[cont++] = pixel+(img.cols);
                 VECTOR(*weight)[wcont++] = abs(((int)img.at<uchar>(i,j) - (int)img.at<uchar>(i+1,j)));
-                //AVANÇA O CONTADOR DO VETOR 2 PARES A FRENTE
-                cont += 4;
+                //LIGA COM A DIAGONAL INFERIOR DIREITA E CALCULA O PESO
+                VECTOR(*edges)[cont++] = pixel;
+                VECTOR(*edges)[cont++] = pixel+(img.cols)+1;
+                VECTOR(*weight)[wcont++] = abs(((int)img.at<uchar>(i,j) - (int)img.at<uchar>(i+1,j+1)));
+
             }
             else
             {
@@ -222,24 +200,26 @@ void generate_edges_weights<COLOR::GRAY>(Mat &img,igraph_vector_t *edges,igraph_
 
                 if(i == (img.rows - 1))//PIXEL NA BORDA INFERIOR, LIGA SÓ A DIREITA
                 {
-                    VECTOR(*edges)[cont] = pixel;
-                    VECTOR(*edges)[cont+1] = pixel+1;
+                    VECTOR(*edges)[cont++] = pixel;
+                    VECTOR(*edges)[cont++] = pixel+1;
                     VECTOR(*weight)[wcont++] = abs(((int)img.at<uchar>(i,j) - (int)img.at<uchar>(i,j + 1)));
-                    cont += 2;
                 }
-                else if(j == (img.cols - 1))//PIXEL NA BORDA DIREITA, LIGA SÓ ABAIXO
+                else if(j == (img.cols - 1))
                 {
-                    VECTOR(*edges)[cont] = pixel;
-                    VECTOR(*edges)[cont+1] = pixel+(img.cols);
+                    //LIGA NA DIAGONAL ESQUERDA INFERIOR
+                    VECTOR(*edges)[cont++] = pixel;
+                    VECTOR(*edges)[cont++] = pixel+(img.cols)-1;
+                    VECTOR(*weight)[wcont++] = abs(((int)img.at<uchar>(i,j) - (int)img.at<uchar>(i+1,j-1)));
+                    //PIXEL NA BORDA DIREITA LIGA ABAIXO
+                    VECTOR(*edges)[cont++] = pixel;
+                    VECTOR(*edges)[cont++] = pixel+(img.cols);
                     VECTOR(*weight)[wcont++] = abs(((int)img.at<uchar>(i,j) - (int)img.at<uchar>(i+1,j)));
-                    cont += 2;
+
                 }
             }
         }
     }
 }
-
-
 
 // gera uma string contendo os valores de média e desvio padrão do vetor(v)
 string str_arff(igraph_vector_t *v)
@@ -265,8 +245,6 @@ igraph_t createGraph(Mat &imagem)
 
     return graph;
 }
-
-
 
 template<>
 void destination_pixels<COLOR::GRAY>(igraph_vs_t* to,Mat& image)
@@ -311,7 +289,7 @@ void destination_pixels<COLOR::RGB>(igraph_vs_t* to,Mat& image)
 
     //segunda camada
     igraph_vs_1(&to[8],(ultimo_pixel_1+(image.cols*image.rows))); // ultimo pixel
-   igraph_vs_1(&to[9],( primeiro_pixel_ultima_1+(image.cols*image.rows))); //primeiro pixel ultima linha
+    igraph_vs_1(&to[9],( primeiro_pixel_ultima_1+(image.cols*image.rows))); //primeiro pixel ultima linha
     igraph_vs_1(&to[10],(meio_vertical_1)+(image.cols*image.rows));
     igraph_vs_1(&to[11],(meio_horizontal_1)+(image.cols*image.rows));
 
@@ -349,20 +327,93 @@ void avgVector(igraph_vector_t *edges,igraph_vector_t *weights, igraph_vector_t 
     igraph_vector_push_back(res,des);
 }
 
-
-string atribute_generator(string arg,image_base& base,bool with_mst)
+template<>
+string atribute_generator<COLOR::GRAY>(Mat &image, bool with_mst, bool do_dijkstra)
 {
-    igraph_t graph;
-    string str_res;
+        string str_res;
+
+        igraph_t graph;
+
+        igraph_vector_ptr_t vPath,ePath;
+
+        const int from[] = {0,(image.cols-1),image.cols/2,image.cols*(image.rows/2)};
+        igraph_vs_t to[4];
+
+        destination_pixels<COLOR::GRAY>(to,image);
+
+        if(image.channels() == 3)
+            cvtColor(image,image,COLOR_RGB2GRAY);
 
 
-    igraph_vector_ptr_t vPath,ePath;
-    std::cerr << "IMAGEM: " << arg << '\n';
-    Mat image = imread(arg);
+        const int h_edges = image.rows*(image.cols-1);
+        const int v_edges = image.cols*(image.rows-1);
+        const int diag_edges = 2*(image.rows*(image.cols-1)) - (2*(image.cols-1));// Para 8 vizinhos
+
+        //INICIALIZAÇÃO DE VETORES
+        VectorGraph vEdges(2*(h_edges + v_edges + diag_edges));
+        VectorGraph vWeights((h_edges + v_edges + diag_edges));
+        VectorGraph res;
+        VectorGraph edges_mst;
+
+        igraph_vector_ptr_init(&vPath,1);
+        igraph_vector_ptr_init(&ePath,1);
 
 
-    if(base.image_color == COLOR::RGB)
-    {
+        VECTOR(vPath)[0] = calloc(1,sizeof(igraph_vector_t));
+        VECTOR(ePath)[0] = calloc(1,sizeof(igraph_vector_t));
+
+        igraph_vector_init((igraph_vector_t*)VECTOR(vPath)[0], 0);
+        igraph_vector_init((igraph_vector_t*)VECTOR(ePath)[0], 0);
+
+        graph = createGraph(image);
+
+        generate_edges_weights<COLOR::GRAY>(image,&vEdges,&vWeights);
+
+       igraph_add_edges(&graph,&vEdges,0);
+
+        //CALCULA E IMPRIME MENOR CAMINHO
+        if(do_dijkstra)
+        {
+            for(int i = 0;i < 4;i++)
+            {
+                igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from[i],to[i],&vWeights,IGRAPH_ALL,NULL,NULL);
+                avgVector((igraph_vector_t*)VECTOR(ePath)[0],&vWeights,&res);
+            }
+        }
+
+        if(with_mst)
+        {
+            igraph_minimum_spanning_tree(&graph,&edges_mst,&vWeights);
+
+            avgVector(&edges_mst,&vWeights,&res);
+        }
+
+        str_res = str_arff(&res);
+        cout << '\n';
+
+
+        //DESTRUIÇÃO DOS ELEMENTOS
+        igraph_vector_destroy((igraph_vector_t*)VECTOR(vPath)[0]);
+        igraph_vector_destroy((igraph_vector_t*)VECTOR(ePath)[0]);
+        igraph_vector_ptr_destroy(&vPath);
+        igraph_vector_ptr_destroy(&ePath);
+        igraph_destroy(&graph);
+
+        for(int i = 0 ; i < 4; i++)
+          igraph_vs_destroy(&to[i]);
+
+        return str_res;
+}
+
+template<>
+string atribute_generator<COLOR::RGB>(Mat &image, bool with_mst, bool do_dijkstra)
+{
+        // STRING de atributos e string pra cada camada
+        string str_res,layer_str;
+
+        igraph_t graph;
+
+        igraph_vector_ptr_t vPath,ePath;
 
         igraph_vs_t to[16];
 
@@ -373,15 +424,24 @@ string atribute_generator(string arg,image_base& base,bool with_mst)
 
         destination_pixels<COLOR::RGB>(to,image);
 
+        const int h_edges = image.rows*(image.cols-1);
+        const int v_edges = image.cols*(image.rows-1);
+        const int diag_edges = 2*(image.rows*(image.cols-1)) - (2*(image.cols-1));// Para 8 vizinhos
+        int camada_8 = 1;
+#ifdef LIGA_8_CAMADA
+        camada_8 = (h_edges * v_edges * diag_edges)/2;
+#endif
+
+
+
         //INICIALIZAÇÃO DE VETORES
-        VectorGraph vEdges((2*((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols))));
-        VectorGraph vWeights((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols));
+        VectorGraph vEdges(2*(image.channels()*(h_edges + v_edges + diag_edges)+(2*camada_8*image.rows*image.cols)));
+        VectorGraph vWeights(image.channels()*(h_edges + v_edges + diag_edges)+(2*camada_8*image.rows*image.cols));
         VectorGraph res;
         VectorGraph edges_mst;
 
         igraph_vector_ptr_init(&vPath,1);
         igraph_vector_ptr_init(&ePath,1);
-
 
 
         VECTOR(vPath)[0] = calloc(1,sizeof(igraph_vector_t));
@@ -409,6 +469,16 @@ string atribute_generator(string arg,image_base& base,bool with_mst)
             igraph_minimum_spanning_tree(&graph,&edges_mst,&vWeights);
 
             avgVector(&edges_mst,&vWeights,&res);
+
+            Mat layers[3];
+            split(image,layers);
+
+            // FAZ MST PARA CADA CAMADA R G e B
+            for(int i = 0; i < 3; i++)
+            {
+                layer_str += atribute_generator<COLOR::GRAY>(layers[i],with_mst,false);
+
+            }
         }
 
         str_res = str_arff(&res);
@@ -425,74 +495,25 @@ string atribute_generator(string arg,image_base& base,bool with_mst)
         for(int i = 0 ; i < 16; i++)
           igraph_vs_destroy(&to[i]);
 
-    }
-    else
-    {
 
-        const int from[] = {0,(image.cols-1),image.cols/2,image.cols*(image.rows/2)};
-        igraph_vs_t to[4];
+        return str_res+layer_str;
 
-        destination_pixels<COLOR::GRAY>(to,image);
-
-        cvtColor(image,image,COLOR_RGB2GRAY);
-
-        //INICIALIZAÇÃO DE VETORES
-        VectorGraph vEdges((2*((image.channels()*(2*image.cols*image.rows-image.cols-image.rows))+(2*image.rows*image.cols))));
-        VectorGraph vWeights((2*image.cols*image.rows-image.cols-image.rows)+(2*image.rows*image.cols));
-        VectorGraph res;
-        VectorGraph edges_mst;
-
-        igraph_vector_ptr_init(&vPath,1);
-        igraph_vector_ptr_init(&ePath,1);
-
-
-        VECTOR(vPath)[0] = calloc(1,sizeof(igraph_vector_t));
-        VECTOR(ePath)[0] = calloc(1,sizeof(igraph_vector_t));
-
-        igraph_vector_init((igraph_vector_t*)VECTOR(vPath)[0], 0);
-        igraph_vector_init((igraph_vector_t*)VECTOR(ePath)[0], 0);
-
-        graph = createGraph(image);
-
-
-        //generate_edges_weights<image_base::COLOR::GRAY>(image,&vEdges,&vWeights);
-        edges_weights<COLOR::GRAY>(image,&vEdges,&vWeights);
-        igraph_add_edges(&graph,&vEdges,0);
-
-        //CALCULA E IMPRIME MENOR CAMINHO
-        for(int i = 0;i < 4;i++)
-        {
-            igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from[i],to[i],&vWeights,IGRAPH_ALL,NULL,NULL);
-            avgVector((igraph_vector_t*)VECTOR(ePath)[0],&vWeights,&res);
-        }
-
-        if(with_mst)
-        {
-            igraph_minimum_spanning_tree(&graph,&edges_mst,&vWeights);
-
-            avgVector(&edges_mst,&vWeights,&res);
-        }
-
-        str_res = str_arff(&res);
-        cout << '\n';
-
-
-        //DESTRUIÇÃO DOS ELEMENTOS
-        igraph_vector_destroy((igraph_vector_t*)VECTOR(vPath)[0]);
-        igraph_vector_destroy((igraph_vector_t*)VECTOR(ePath)[0]);
-        igraph_vector_ptr_destroy(&vPath);
-        igraph_vector_ptr_destroy(&ePath);
-        igraph_destroy(&graph);
-
-        for(int i = 0 ; i < 4; i++)
-          igraph_vs_destroy(&to[i]);
-    }
-
-
-    return str_res;
 }
 
+string produce_values(string arg,image_base& base,bool with_mst)
+{
+    std::cerr << "IMAGEM: " << arg << '\n';
+    Mat image = imread(arg);
 
+
+    if(base.image_color == COLOR::RGB)
+    {
+        return atribute_generator<COLOR::RGB>(image,with_mst);
+    }
+
+    return atribute_generator<COLOR::GRAY>(image,with_mst);
+
+}
 
 mutex mt;
 void extrai_valor(string folder,image_base& base,bool with_mst)
@@ -507,7 +528,7 @@ void extrai_valor(string folder,image_base& base,bool with_mst)
         std::cout << "Thread: " << folder << "\nImagem: " << i << " de " << images_path.size() << '\n';
         std::cout << "Caminho Imagem: " << images_path[i] << '\n';
 
-        string temp = atribute_generator(images_path[i],base,with_mst);
+        string temp = produce_values(images_path[i],base,with_mst);
         temp += "class_"+folder+"\n";
 
         values << temp;
@@ -519,7 +540,6 @@ void extrai_valor(string folder,image_base& base,bool with_mst)
 
 }
 
-
 void thread_handler(image_base& base,bool with_mst)
 {
     std::vector<thread> threads;
@@ -530,6 +550,7 @@ void thread_handler(image_base& base,bool with_mst)
 
     threads.reserve(folders_name.size());
 
+    //DEBUG
     for(int i = 0; i < folders_name.size(); i++)
             threads.emplace_back(extrai_valor,folders_name[i],std::ref(base),with_mst);
 

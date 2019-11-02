@@ -1,5 +1,6 @@
 #include <fstream>
 #include <vector>
+#include <iostream>
 
 enum class COLOR{ GRAY, RGB};
 
@@ -9,14 +10,18 @@ struct image_base
     {
         arff_file << "@RELATION CLASSES\n";
 
-        int num_lines = 8;
+        int att_lines = 8;
 
-        if(with_mst)
-            num_lines += 2;
         if(rgb)
-            num_lines *= 4;
+        {
+            att_lines *= 4;
+            att_lines += 6;
+        }
+        if(with_mst)
+            att_lines += 2;
 
-        for(int i = 0; i < num_lines;i++)
+
+        for(int i = 0; i < att_lines ;i++)
             arff_file << "@ATTRIBUTE atb" << i << " NUMERIC\n";
     }
 
