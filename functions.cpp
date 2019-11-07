@@ -9,20 +9,21 @@
 #include "vectorgraph.hpp"
 
 #define DB(X) std::cout << #X << '=' << X << '\n'
-//#define LIGA_8_CAMADA
+
+constexpr int LIGA_8_CAMADA = 0;
 
 using namespace cv;
 using namespace std;
 
 template<COLOR color>
-void generate_edges_weights(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight);
+void generate_edges_weights(const Mat &img,igraph_vector_t *edges,igraph_vector_t *weight);
 
 // define os pixels de partida para o algoritmo dijkstra
 template<COLOR color>
-void destination_pixels(igraph_vs_t* to,Mat& image);
+void destination_pixels(igraph_vs_t* to,const Mat& image);
 
 template<COLOR color>
-string atribute_generator(Mat &image, bool with_mst, bool do_dijkstra=true);
+string atribute_generator(const Mat &image, bool with_mst, bool do_dijkstra=true);
 
 /*
  * Criei essa struct por que achei que pode facilitar na hora de usar a formula
@@ -37,9 +38,12 @@ struct pixel_
 };
 
 template<>
-void generate_edges_weights<COLOR::RGB>(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
+void generate_edges_weights<COLOR::RGB>(const Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
 {
-    int cont = 0,pixel = 0,wcont = 0;
+    int cont = 0;
+    int pixel = 0;
+    int wcont = 0;
+
     Vec3b intensity1,intensity2;
 
     for(int camada = 0; camada < 3;camada++)
@@ -59,7 +63,8 @@ void generate_edges_weights<COLOR::RGB>(Mat &img,igraph_vector_t *edges,igraph_v
                 if((i < img.rows - 1) && (j < img.cols - 1))//PIXEL NÃO É BORDA, LIGA A DIREITA E ABAIXO
                 {
 
-                    #ifdef LIGA_8_CAMADA // Faz ligação com os oito de cima
+                    if constexpr(LIGA_8_CAMADA)// Faz ligação com os oito de cima
+                    {
                         if(camada < 2)
                         {
                             intensity1 = img.at<Vec3b>(i,j);
@@ -85,7 +90,7 @@ void generate_edges_weights<COLOR::RGB>(Mat &img,igraph_vector_t *edges,igraph_v
                             intensity2 = img.at<Vec3b>(i+1,j+1);
                             VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada+1]));
                         }
-                    #endif
+                    }
 
                     //LIGA COM O VERTICE DA DIREITA E CALCULA O PESO
                     VECTOR(*edges)[cont++] = pixel;
@@ -119,7 +124,8 @@ void generate_edges_weights<COLOR::RGB>(Mat &img,igraph_vector_t *edges,igraph_v
 
                     if(i == (img.rows - 1))//PIXEL NA BORDA INFERIOR, LIGA SÓ A DIREITA
                     {
-                        #ifdef LIGA_8_CAMADA
+                        if constexpr(LIGA_8_CAMADA)
+                        {
                             if(camada < 2)
                             {
                                 VECTOR(*edges)[cont++] = pixel;
@@ -127,7 +133,7 @@ void generate_edges_weights<COLOR::RGB>(Mat &img,igraph_vector_t *edges,igraph_v
                                 intensity2 = img.at<Vec3b>(i,j+1);
                                 VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada+1]));
                             }
-                        #endif
+                        }
 
                         VECTOR(*edges)[cont++] = pixel;
                         VECTOR(*edges)[cont++] = pixel+1;
@@ -136,7 +142,8 @@ void generate_edges_weights<COLOR::RGB>(Mat &img,igraph_vector_t *edges,igraph_v
                     }
                     else if(j == (img.cols - 1))
                     {
-                        #ifdef LIGA_8_CAMADA
+                        if constexpr(LIGA_8_CAMADA)
+                        {
                             if(camada < 2)
                             {
                                 VECTOR(*edges)[cont++] = pixel;
@@ -149,7 +156,7 @@ void generate_edges_weights<COLOR::RGB>(Mat &img,igraph_vector_t *edges,igraph_v
                                 intensity2 = img.at<Vec3b>(i+1,j);
                                 VECTOR(*weight)[wcont++] = abs((int)(intensity1.val[camada] - intensity2.val[camada+1]));
                             }
-                        #endif
+                        }
                         // LIGA NA DIAGONAL INFERIOR ESQUERDA
                         VECTOR(*edges)[cont++] = pixel;
                         VECTOR(*edges)[cont++] = pixel+(img.cols)-1;
@@ -170,7 +177,7 @@ void generate_edges_weights<COLOR::RGB>(Mat &img,igraph_vector_t *edges,igraph_v
 }
 
 template<>
-void generate_edges_weights<COLOR::GRAY>(Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
+void generate_edges_weights<COLOR::GRAY>(const Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
 {
     int cont = 0,pixel = 0,wcont = 0;
 
@@ -244,7 +251,7 @@ string str_arff(igraph_vector_t *v)
 }
 
 // cria um grafo a partir da imagem passada
-igraph_t createGraph(Mat &imagem)
+igraph_t createGraph(const Mat &imagem)
 {
     igraph_t graph;
 
@@ -256,7 +263,7 @@ igraph_t createGraph(Mat &imagem)
 }
 
 template<>
-void destination_pixels<COLOR::GRAY>(igraph_vs_t* to,Mat& image)
+void destination_pixels<COLOR::GRAY>(igraph_vs_t* to,const Mat& image)
 {
 
     const int ultimo_pixel_1  = (image.cols*image.rows) -1;
@@ -273,7 +280,7 @@ void destination_pixels<COLOR::GRAY>(igraph_vs_t* to,Mat& image)
 }
 
 template<>
-void destination_pixels<COLOR::RGB>(igraph_vs_t* to,Mat& image)
+void destination_pixels<COLOR::RGB>(igraph_vs_t* to,const Mat& image)
 {
     const int ultimo_pixel = (  (image.cols*image.rows)-1)+(image.cols*image.rows*2) ;
     const int primeiro_pixel_ultima = ((image.cols*image.rows)-image.cols)+(image.cols*image.rows*2);
@@ -314,7 +321,7 @@ void destination_pixels<COLOR::RGB>(igraph_vs_t* to,Mat& image)
 void avgVector(igraph_vector_t *edges,igraph_vector_t *weights, igraph_vector_t *res)
 {
     igraph_real_t sum = 0,des = 0;
-    const int size = igraph_vector_size(edges);
+    const auto size = igraph_vector_size(edges);
 
     for(int i = 0; i < size;i++)
     {
@@ -337,7 +344,7 @@ void avgVector(igraph_vector_t *edges,igraph_vector_t *weights, igraph_vector_t 
 }
 
 template<>
-string atribute_generator<COLOR::GRAY>(Mat &image, bool with_mst, bool do_dijkstra)
+string atribute_generator<COLOR::GRAY>(const Mat &image, bool with_mst, bool do_dijkstra)
 {
         string str_res;
 
@@ -415,10 +422,14 @@ string atribute_generator<COLOR::GRAY>(Mat &image, bool with_mst, bool do_dijkst
 }
 
 template<>
-string atribute_generator<COLOR::RGB>(Mat &image, bool with_mst, bool do_dijkstra)
+string atribute_generator<COLOR::RGB>(const Mat &image, bool with_mst, bool do_dijkstra)
 {
         // STRING de atributos e string pra cada camada
         string str_res,layer_str;
+
+        str_res.reserve(40*8+41);
+        layer_str.reserve(18);
+
 
         igraph_t graph;
 
@@ -436,10 +447,13 @@ string atribute_generator<COLOR::RGB>(Mat &image, bool with_mst, bool do_dijkstr
         const int h_edges = image.rows*(image.cols-1);
         const int v_edges = image.cols*(image.rows-1);
         const int diag_edges = 2*(image.rows*(image.cols-1)) - (2*(image.cols-1));// Para 8 vizinhos
-        int camada_8 = 1;
-#ifdef LIGA_8_CAMADA
-        camada_8 = (h_edges + v_edges + diag_edges);
-#endif
+        int camada_8 = 1/2;
+
+        if constexpr( LIGA_8_CAMADA )
+        {
+            std::cerr << "AQUI\n";
+            camada_8 = (h_edges + v_edges + diag_edges);
+        }
 
         //INICIALIZAÇÃO DE VETORES
         VectorGraph vEdges(2*(image.channels()*(h_edges + v_edges + diag_edges)+(2*image.rows*image.cols)+(2*camada_8)));
@@ -465,10 +479,13 @@ string atribute_generator<COLOR::RGB>(Mat &image, bool with_mst, bool do_dijkstr
         igraph_add_edges(&graph,&vEdges,0);
 
         //CALCULA E IMPRIME MENOR CAMINHO
-        for(int i = 0; i < 16;i++)
+        if(do_dijkstra)
         {
-            igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from[i],to[i],&vWeights,IGRAPH_ALL,NULL,NULL);
-            avgVector((igraph_vector_t*)VECTOR(ePath)[0],&vWeights,&res);
+            for(int i = 0; i < 16;i++)
+            {
+                igraph_get_shortest_paths_dijkstra(&graph,&vPath,&ePath,from[i],to[i],&vWeights,IGRAPH_ALL,NULL,NULL);
+                avgVector((igraph_vector_t*)VECTOR(ePath)[0],&vWeights,&res);
+            }
         }
 
         if(with_mst)
@@ -507,36 +524,36 @@ string atribute_generator<COLOR::RGB>(Mat &image, bool with_mst, bool do_dijkstr
 
 }
 
-string produce_values(string arg,image_base& base,bool with_mst)
+string produce_values(string_view arg,image_base& base,bool with_mst,bool do_dijkstra)
 {
-    std::cerr << "IMAGEM: " << arg << '\n';
-    Mat image = imread(arg);
+    const Mat image = imread(arg.data());
 
 
     if(base.image_color == COLOR::RGB)
     {
-        return atribute_generator<COLOR::RGB>(image,with_mst);
+        return atribute_generator<COLOR::RGB>(image,with_mst,do_dijkstra);
     }
 
-    return atribute_generator<COLOR::GRAY>(image,with_mst);
+    return atribute_generator<COLOR::GRAY>(image,with_mst,do_dijkstra);
 
 }
 
 mutex mt;
-void extrai_valor(string folder,image_base& base,bool with_mst)
+void extrai_valor(string_view folder,image_base& base,bool with_mst,bool do_dijkstra)
 {
 
     stringstream values;
 
-    vector<string> images_path = get_images_in_class(bsf::path(base.path+'/'+folder));
+    const vector<string> images_path = get_images_in_class(bsf::path(base.path+'/'+std::string(folder.data())));
 
     for(int i = 0; i < images_path.size(); i++)
     {
         std::cout << "Thread: " << folder << "\nImagem: " << i << " de " << images_path.size() << '\n';
         std::cout << "Caminho Imagem: " << images_path[i] << '\n';
 
-        string temp = produce_values(images_path[i],base,with_mst);
-        temp += "class_"+folder+"\n";
+        string temp = produce_values(images_path[i],base,with_mst,do_dijkstra);
+
+        temp += "class_"+std::string(folder.data())+"\n";
 
         values << temp;
     }
@@ -545,26 +562,32 @@ void extrai_valor(string folder,image_base& base,bool with_mst)
     base.arff_file << values.str();
     mt.unlock();
 
+
 }
 
-void thread_handler(image_base& base,bool with_mst)
+void thread_handler(image_base& base,bool do_dijkstra,bool with_mst)
 {
+    const int num_threads = 16;
     std::vector<thread> threads;
-    
-    std::vector<std::string> folders_name = get_classes_name( bsf::path(base.path) );
+
+    const std::vector<string> folders_name = get_classes_name( bsf::path(base.path));
 
     base.put_classes_in_arff(folders_name);
 
     threads.reserve(folders_name.size());
 
-    //DEBUG
-    for(int i = 0; i < folders_name.size(); i++)
-            threads.emplace_back(extrai_valor,folders_name[i],std::ref(base),with_mst);
+    for(int i = 0; i < folders_name.size(); )
+    {
+
+        int antigo_i = i;
+        for(int j = 0; j < num_threads && i < folders_name.size(); j++,i++)
+            threads.emplace_back(extrai_valor,folders_name[i],std::ref(base),with_mst,do_dijkstra);
+
+        for(int j = antigo_i; j < i;j++)
+            threads[j].join();
 
 
-    for(int i = 0; i < folders_name.size(); i++)
-        threads[i].join();
-
+    }
 
 
 }
