@@ -6,7 +6,6 @@
 #include <map>
 #include "functions.cpp"
 
-
 void verify_args_number(int argc);
 
 
@@ -25,7 +24,7 @@ int main(int argc, char* argv[])
 
     base.path = folders_path.data();
 
-    std::string dataset_name = get_base_naem(bsf::path(base.path));
+    std::string dataset_name = get_base_name(bsf::path(base.path));
 
     std::string color{"GRAY"};
     if(!rgb)
@@ -36,7 +35,8 @@ int main(int argc, char* argv[])
         base.image_color = COLOR::RGB;
     }
 
-    const std::string arff_name{dataset_name+"_"+color+"_"+(do_dijkstra?"DIJ_":"")+(mst?"MST_":"")+".arff"};
+
+    const std::string arff_name{dataset_name+"_"+color+"_"+(do_dijkstra?"DIJ_":"")+(mst?"MST_":"")+(LIGA_8_CAMADA?"8":"1")+".arff"};
 
     base.arff_file.open(arff_file_path+arff_name);
 

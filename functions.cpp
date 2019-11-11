@@ -10,7 +10,7 @@
 
 #define DB(X) std::cout << #X << '=' << X << '\n'
 
-constexpr int LIGA_8_CAMADA = 0;
+constexpr int LIGA_8_CAMADA = 1;
 
 using namespace cv;
 using namespace std;
@@ -269,7 +269,7 @@ void destination_pixels<COLOR::GRAY>(igraph_vs_t* to,const Mat& image)
     const int ultimo_pixel_1  = (image.cols*image.rows) -1;
     const int primeiro_pixel_ultima_1 = (image.cols*image.rows)-image.cols;
     const int meio_vertical_1 = (image.cols*(5/2));
-    const int meio_horizontal_1 = ((image.cols*image.rows)/2) + (image.cols-1);
+    const int meio_horizontal_1 = ((image.cols*(image.rows/2)) + (image.cols-1));
 
     //PIXELS DE DESTINO
     igraph_vs_1(&to[0],ultimo_pixel_1); // ultimo pixel
@@ -287,7 +287,7 @@ void destination_pixels<COLOR::RGB>(igraph_vs_t* to,const Mat& image)
     const int ultimo_pixel_1  = (image.cols*image.rows) -1;
     const int primeiro_pixel_ultima_1 = (image.cols*image.rows)-image.cols;
     const int meio_vertical_1 = (image.cols*(5/2));
-    const int meio_horizontal_1 = ( (image.cols*image.rows)/2 ) + (image.cols-1);
+    const int meio_horizontal_1 = ( (image.cols*(image.rows/2) ) + (image.cols-1));
 
     //PIXELS DE DESTINO
 
@@ -298,13 +298,13 @@ void destination_pixels<COLOR::RGB>(igraph_vs_t* to,const Mat& image)
     igraph_vs_1(&to[3],ultimo_pixel_1); // ultimo pixel primeira camada
 
     //primeira camada
-    igraph_vs_1(&to[4],ultimo_pixel_1); // ultimo pixel
+    igraph_vs_1(&to[4],ultimo_pixel_1);
     igraph_vs_1(&to[5],primeiro_pixel_ultima_1); // primeiro pixel ultima linha primeira camada
     igraph_vs_1(&to[6],meio_vertical_1); // meio vertical
     igraph_vs_1(&to[7],meio_horizontal_1); // meio horizontal direita
 
     //segunda camada
-    igraph_vs_1(&to[8],(ultimo_pixel_1+(image.cols*image.rows))); // ultimo pixel
+    igraph_vs_1(&to[8],(ultimo_pixel_1+(image.cols*image.rows)));
     igraph_vs_1(&to[9],( primeiro_pixel_ultima_1+(image.cols*image.rows))); //primeiro pixel ultima linha
     igraph_vs_1(&to[10],(meio_vertical_1)+(image.cols*image.rows));
     igraph_vs_1(&to[11],(meio_horizontal_1)+(image.cols*image.rows));
@@ -357,8 +357,10 @@ string atribute_generator<COLOR::GRAY>(const Mat &image, bool with_mst, bool do_
 
         destination_pixels<COLOR::GRAY>(to,image);
 
+        /*
         if(image.channels() == 3)
             cvtColor(image,image,COLOR_RGB2GRAY);
+            */
 
 
         const int h_edges = image.rows*(image.cols-1);
@@ -405,7 +407,6 @@ string atribute_generator<COLOR::GRAY>(const Mat &image, bool with_mst, bool do_
         }
 
         str_res = str_arff(&res);
-        cout << '\n';
 
 
         //DESTRUIÇÃO DOS ELEMENTOS
@@ -438,7 +439,7 @@ string atribute_generator<COLOR::RGB>(const Mat &image, bool with_mst, bool do_d
         igraph_vs_t to[16];
 
         const int from[] = {0,(image.cols-1),(image.cols-1 + image.cols*image.rows * 2),(image.cols*image.rows*2),
-            0,(image.cols-1),image.cols/3,image.cols*(image.rows/2),
+            0,(image.cols-1),image.cols/2,image.cols*(image.rows/2),
               image.cols*image.rows,(image.cols-1)+(image.cols*image.rows),(image.cols/2)+(image.cols*image.rows),image.cols*(image.rows/2)+(image.cols*image.rows),
               image.cols*image.rows*2,(image.cols-1)+(image.cols*image.rows*2),(image.cols/2)+(image.cols*image.rows*2),image.cols*(image.rows/2)+(image.cols*image.rows*2)};
 
@@ -451,7 +452,6 @@ string atribute_generator<COLOR::RGB>(const Mat &image, bool with_mst, bool do_d
 
         if constexpr( LIGA_8_CAMADA )
         {
-            std::cerr << "AQUI\n";
             camada_8 = (h_edges + v_edges + diag_edges);
         }
 
@@ -506,7 +506,6 @@ string atribute_generator<COLOR::RGB>(const Mat &image, bool with_mst, bool do_d
         }
 
         str_res = str_arff(&res);
-        cout << '\n';
 
 
         //DESTRUIÇÃO DOS ELEMENTOS
@@ -549,7 +548,6 @@ void extrai_valor(string_view folder,image_base& base,bool with_mst,bool do_dijk
     for(int i = 0; i < images_path.size(); i++)
     {
         std::cout << "Thread: " << folder << "\nImagem: " << i << " de " << images_path.size() << '\n';
-        std::cout << "Caminho Imagem: " << images_path[i] << '\n';
 
         string temp = produce_values(images_path[i],base,with_mst,do_dijkstra);
 
@@ -567,7 +565,7 @@ void extrai_valor(string_view folder,image_base& base,bool with_mst,bool do_dijk
 
 void thread_handler(image_base& base,bool do_dijkstra,bool with_mst)
 {
-    const int num_threads = 16;
+    const int num_threads = 4;
     std::vector<thread> threads;
 
     const std::vector<string> folders_name = get_classes_name( bsf::path(base.path));
@@ -576,13 +574,20 @@ void thread_handler(image_base& base,bool do_dijkstra,bool with_mst)
 
     threads.reserve(folders_name.size());
 
+    int counter = 0;
+    float percentage = 0.0f;
     for(int i = 0; i < folders_name.size(); )
     {
 
         int antigo_i = i;
         for(int j = 0; j < num_threads && i < folders_name.size(); j++,i++)
+        {
+            counter++;
             threads.emplace_back(extrai_valor,folders_name[i],std::ref(base),with_mst,do_dijkstra);
+        }
+        percentage = (counter/folders_name.size()) * 100;
 
+        std::cout << percentage << "% complete!\n";
         for(int j = antigo_i; j < i;j++)
             threads[j].join();
 
