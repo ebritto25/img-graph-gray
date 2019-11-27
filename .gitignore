@@ -1,3 +1,4 @@
 *.pro*
 *.arff
-./objects/
+objects/*
+graph_descriptor
