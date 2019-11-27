@@ -1,44 +1,8 @@
-#include <opencv2/opencv.hpp>
-#include <mutex>
-#include <queue>
-#include <iostream>
-#include <functional>
-#include <thread>
-#include "image_base.cpp"
-#include "boost_utils.cpp"
-#include "vectorgraph.hpp"
+#include "descriptor_functions.hpp"
 
-#define DB(X) std::cout << #X << '=' << X << '\n'
-
-constexpr int LIGA_8_CAMADA = 1;
-
-using namespace cv;
-using namespace std;
-
-template<COLOR color>
-void generate_edges_weights(const Mat &img,igraph_vector_t *edges,igraph_vector_t *weight);
-
-// define os pixels de partida para o algoritmo dijkstra
-template<COLOR color>
-void destination_pixels(igraph_vs_t* to,const Mat& image);
-
-template<COLOR color>
-string atribute_generator(const Mat &image, bool with_mst, bool do_dijkstra=true);
-
-/*
- * Criei essa struct por que achei que pode facilitar na hora de usar a formula
- * mas pode ser que seja desnecessária
- */
-template<typename T>
-struct pixel_
-{
-    int x;
-    int y;
-    T intensity;
-};
 
 template<>
-void generate_edges_weights<COLOR::RGB>(const Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
+void generate_edges_weights<COLOR::RGB>(const Mat &img,igraph_vector_t *edges,igraph_vector_t *weight,bool liga_8_camada)
 {
     int cont = 0;
     int pixel = 0;
@@ -63,7 +27,7 @@ void generate_edges_weights<COLOR::RGB>(const Mat &img,igraph_vector_t *edges,ig
                 if((i < img.rows - 1) && (j < img.cols - 1))//PIXEL NÃO É BORDA, LIGA A DIREITA E ABAIXO
                 {
 
-                    if constexpr(LIGA_8_CAMADA)// Faz ligação com os oito de cima
+                    if (liga_8_camada)// Faz ligação com os oito de cima
                     {
                         if(camada < 2)
                         {
@@ -124,7 +88,7 @@ void generate_edges_weights<COLOR::RGB>(const Mat &img,igraph_vector_t *edges,ig
 
                     if(i == (img.rows - 1))//PIXEL NA BORDA INFERIOR, LIGA SÓ A DIREITA
                     {
-                        if constexpr(LIGA_8_CAMADA)
+                        if (liga_8_camada)
                         {
                             if(camada < 2)
                             {
@@ -142,7 +106,7 @@ void generate_edges_weights<COLOR::RGB>(const Mat &img,igraph_vector_t *edges,ig
                     }
                     else if(j == (img.cols - 1))
                     {
-                        if constexpr(LIGA_8_CAMADA)
+                        if(liga_8_camada)
                         {
                             if(camada < 2)
                             {
@@ -177,7 +141,7 @@ void generate_edges_weights<COLOR::RGB>(const Mat &img,igraph_vector_t *edges,ig
 }
 
 template<>
-void generate_edges_weights<COLOR::GRAY>(const Mat &img,igraph_vector_t *edges,igraph_vector_t *weight)
+void generate_edges_weights<COLOR::GRAY>(const Mat &img,igraph_vector_t *edges,igraph_vector_t *weight,bool liga_8_camada)
 {
     int cont = 0,pixel = 0,wcont = 0;
 
@@ -237,7 +201,6 @@ void generate_edges_weights<COLOR::GRAY>(const Mat &img,igraph_vector_t *edges,i
     }
 }
 
-// gera uma string contendo os valores de média e desvio padrão do vetor(v)
 string str_arff(igraph_vector_t *v)
 {
   long l = igraph_vector_size(v);
@@ -250,7 +213,6 @@ string str_arff(igraph_vector_t *v)
   return res;
 }
 
-// cria um grafo a partir da imagem passada
 igraph_t createGraph(const Mat &imagem)
 {
     igraph_t graph;
@@ -317,7 +279,6 @@ void destination_pixels<COLOR::RGB>(igraph_vs_t* to,const Mat& image)
 
 }
 
-//gera um vetor resultante que contem as médias e os desvios padrões das distâncias
 void avgVector(igraph_vector_t *edges,igraph_vector_t *weights, igraph_vector_t *res)
 {
     igraph_real_t sum = 0,des = 0;
@@ -344,8 +305,12 @@ void avgVector(igraph_vector_t *edges,igraph_vector_t *weights, igraph_vector_t 
 }
 
 template<>
-string atribute_generator<COLOR::GRAY>(const Mat &image, bool with_mst, bool do_dijkstra)
+string atribute_generator<COLOR::GRAY>(Mat &image, bool with_mst, bool do_dijkstra,bool liga_8_camada)
 {
+
+        if(image.channels() == 3)
+            cvtColor(image,image,COLOR_RGB2GRAY);
+
         string str_res;
 
         igraph_t graph;
@@ -355,12 +320,8 @@ string atribute_generator<COLOR::GRAY>(const Mat &image, bool with_mst, bool do_
         const int from[] = {0,(image.cols-1),image.cols/2,image.cols*(image.rows/2)};
         igraph_vs_t to[4];
 
-        destination_pixels<COLOR::GRAY>(to,image);
 
-        /*
-        if(image.channels() == 3)
-            cvtColor(image,image,COLOR_RGB2GRAY);
-            */
+        destination_pixels<COLOR::GRAY>(to,image);
 
 
         const int h_edges = image.rows*(image.cols-1);
@@ -423,9 +384,9 @@ string atribute_generator<COLOR::GRAY>(const Mat &image, bool with_mst, bool do_
 }
 
 template<>
-string atribute_generator<COLOR::RGB>(const Mat &image, bool with_mst, bool do_dijkstra)
+string atribute_generator<COLOR::RGB>(Mat &image, bool with_mst, bool do_dijkstra, bool liga_8_camada)
 {
-        // STRING de atributos e string pra cada camada
+        // STRING de atributos e string pra comecada camada
         string str_res,layer_str;
 
         str_res.reserve(40*8+41);
@@ -450,7 +411,7 @@ string atribute_generator<COLOR::RGB>(const Mat &image, bool with_mst, bool do_d
         const int diag_edges = 2*(image.rows*(image.cols-1)) - (2*(image.cols-1));// Para 8 vizinhos
         int camada_8 = 1/2;
 
-        if constexpr( LIGA_8_CAMADA )
+        if ( liga_8_camada )
         {
             camada_8 = (h_edges + v_edges + diag_edges);
         }
@@ -474,7 +435,7 @@ string atribute_generator<COLOR::RGB>(const Mat &image, bool with_mst, bool do_d
 
         graph = createGraph(image);
 
-        generate_edges_weights<COLOR::RGB>(image,&vEdges,&vWeights);
+        generate_edges_weights<COLOR::RGB>(image,&vEdges,&vWeights,liga_8_camada);
 
         igraph_add_edges(&graph,&vEdges,0);
 
@@ -523,22 +484,23 @@ string atribute_generator<COLOR::RGB>(const Mat &image, bool with_mst, bool do_d
 
 }
 
-string produce_values(string_view arg,image_base& base,bool with_mst,bool do_dijkstra)
+string produce_values(string_view arg,image_base& base,bool with_mst,bool do_dijkstra, bool liga_8_camada)
 {
-    const Mat image = imread(arg.data());
+    Mat image = imread(arg.data());
 
 
     if(base.image_color == COLOR::RGB)
     {
-        return atribute_generator<COLOR::RGB>(image,with_mst,do_dijkstra);
+        return atribute_generator<COLOR::RGB>(image,with_mst,do_dijkstra,liga_8_camada);
     }
 
     return atribute_generator<COLOR::GRAY>(image,with_mst,do_dijkstra);
 
 }
 
+
 mutex mt;
-void extrai_valor(string_view folder,image_base& base,bool with_mst,bool do_dijkstra)
+void extrai_valor(string_view folder,image_base& base,bool with_mst,bool do_dijkstra, bool liga_8_camada)
 {
 
     stringstream values;
@@ -548,8 +510,9 @@ void extrai_valor(string_view folder,image_base& base,bool with_mst,bool do_dijk
     for(int i = 0; i < images_path.size(); i++)
     {
         std::cout << "Thread: " << folder << "\nImagem: " << i << " de " << images_path.size() << '\n';
+        std::cout << images_path[i] << '\n';
 
-        string temp = produce_values(images_path[i],base,with_mst,do_dijkstra);
+        string temp = produce_values(images_path[i],base,with_mst,do_dijkstra,liga_8_camada);
 
         temp += "class_"+std::string(folder.data())+"\n";
 
@@ -563,7 +526,7 @@ void extrai_valor(string_view folder,image_base& base,bool with_mst,bool do_dijk
 
 }
 
-void thread_handler(image_base& base,bool do_dijkstra,bool with_mst)
+void thread_handler(image_base& base,bool do_dijkstra,bool with_mst,bool liga_8_camada)
 {
     const int num_threads = 4;
     std::vector<thread> threads;
@@ -574,21 +537,16 @@ void thread_handler(image_base& base,bool do_dijkstra,bool with_mst)
 
     threads.reserve(folders_name.size());
 
-    int counter = 0;
-    float percentage = 0.0f;
     for(int i = 0; i < folders_name.size(); )
     {
 
-        int antigo_i = i;
+        int saved_i = i;
         for(int j = 0; j < num_threads && i < folders_name.size(); j++,i++)
         {
-            counter++;
-            threads.emplace_back(extrai_valor,folders_name[i],std::ref(base),with_mst,do_dijkstra);
+            threads.emplace_back(extrai_valor,folders_name[i],std::ref(base),with_mst,do_dijkstra,liga_8_camada);
         }
-        percentage = (counter/folders_name.size()) * 100;
 
-        std::cout << percentage << "% complete!\n";
-        for(int j = antigo_i; j < i;j++)
+        for(int j = saved_i; j < i;j++)
             threads[j].join();
 
 

@@ -1,10 +1,9 @@
-#include <QCoreApplication>
 #include <cmath>
 #include <istream>
 #include <array>
 #include <string_view>
 #include <map>
-#include "functions.cpp"
+#include "descriptor_functions.hpp"
 
 void verify_args_number(int argc);
 
@@ -18,7 +17,8 @@ int main(int argc, char* argv[])
     const bool rgb = std::stoi(argv[2]);
     const bool do_dijkstra = std::stoi(argv[3]);
     const bool mst = std::stoi(argv[4]);
-    const std::string arff_file_path = argv[5];
+    const bool liga_8_camada = std::stoi(argv[5]);
+    const std::string arff_file_path = argv[6];
 
     image_base base;
 
@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
     }
 
 
-    const std::string arff_name{dataset_name+"_"+color+"_"+(do_dijkstra?"DIJ_":"")+(mst?"MST_":"")+(LIGA_8_CAMADA?"8":"1")+".arff"};
+    const std::string arff_name{dataset_name+"_"+color+"_"+(do_dijkstra?"DIJ_":"")+(mst?"MST_":"")+(liga_8_camada?"8":"1")+".arff"};
 
     base.arff_file.open(arff_file_path+arff_name);
 
@@ -50,8 +50,7 @@ int main(int argc, char* argv[])
 
     base.init_arff_file(do_dijkstra,mst,rgb);
 
-    thread_handler(base,do_dijkstra,mst);
-
+    thread_handler(base,do_dijkstra,mst,liga_8_camada);
 
 }
 
@@ -66,7 +65,8 @@ void verify_args_number(int argc)
              << "2 - Imagens GRAY ou RGB(RGB == 1 | GRAY = 0)\n"
              << "3 - Fazer o dijkstra ou não(1 ou 0)\n"
              << "4 - Gerar ou nao MST(1 ou 0)\n"
-             << "5 - Destino do arquivo arff\n";
+             << "5 - Realizar ou não 8 ligações entre camadas(1 ou 0)\n"
+             << "6 - Destino do arquivo arff\n";
    
         exit(EXIT_FAILURE);
     }

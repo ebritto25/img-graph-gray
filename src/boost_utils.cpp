@@ -1,9 +1,4 @@
-#include <boost/filesystem.hpp>
-#include <iostream> // REMOVER LINHAS COM "DEBUG"
-#include <vector>
-
-
-namespace bsf = boost::filesystem;
+#include "boost_utils.hpp"
 
 std::string get_base_name(const bsf::path & base_path) { return base_path.filename().string(); }
 

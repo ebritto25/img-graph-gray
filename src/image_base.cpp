@@ -1,11 +1,12 @@
-#include <fstream>
-#include <vector>
-#include <iostream>
+#include <fstream> 
+#include <vector> 
+#include <iostream> 
 
-enum class COLOR{ GRAY, RGB};
 
+enum class COLOR {GRAY,RGB};
 struct image_base
 {
+
     void init_arff_file(bool do_dijkstra, bool with_mst, bool rgb)
     {
         arff_file << "@RELATION CLASSES\n";
@@ -22,7 +23,8 @@ struct image_base
             {
                 att_lines *= 4;
             }
-            att_lines += 6;
+            if(with_mst)
+                att_lines += 6;
         }
         if(with_mst)
             att_lines += 2;
